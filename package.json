@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "com.lexicanterbeta.app",
-    "productName": "Lexicanter",
+    "productName": "βLexicanter",
     "win": {
       "target": "nsis",
       "icon": "src/rsrc/Quill Icon.ico"
