@@ -22,10 +22,10 @@
     "productName": "βLexicanter",
     "win": {
       "target": "nsis",
-      "icon": "src/rsrc/Quill Icon.ico"
+      "icon": "src/res/Quill Icon.ico"
     },
     "mac": {
-      "icon": "src/rsrc/Quill Icon.icns"
+      "icon": "src/res/Quill Icon.icns"
     },
     "nsis": {
       "installerIcon": "src/rsrc/Quill Icon.ico",
