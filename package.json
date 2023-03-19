@@ -1,6 +1,6 @@
 {
-  "name": "lexicanter",
-  "productName": "Lexicanter",
+  "name": "lexicanterbeta",
+  "productName": "βLexicanter",
   "version": "2.0.0",
   "description": "A lexicon management tool for constructed languages.",
   "main": "src/index.js",
