@@ -1,0 +1,226 @@
+body {
+  color: #000;
+  background-color: #000;
+}
+
+button, select {
+  color: #000;
+  background-color: #000;
+}
+button[id=overwrite], select[id=overwrite] {
+  color: darkred;
+}
+button.inflection, select.inflection {
+  background-color: transparent !important;
+  border: none !important;
+  font-family: Noto;
+  font-size: 9pt;
+}
+
+.hover-highlight:hover {
+  color: #000;
+}
+
+.hover-shadow:hover {
+  box-shadow: 0px 2px 12px #000;
+}
+
+.tab-container .button-container, .tab-container .button-container button {
+  color: #000;
+  background-color: #000;
+}
+.tab-container .button-container:hover, .tab-container .button-container button:hover {
+  color: #000;
+}
+
+.selected {
+  background-color: #000 !important;
+}
+
+.container {
+  background-color: #000;
+  border: 1px solid #000;
+}
+
+.info {
+  color: #000;
+}
+
+.version-info {
+  color: #000;
+}
+
+.lex-entry, .lex-body {
+  color: #000;
+}
+.lex-entry:hover {
+  background: #000;
+  color: #000;
+}
+
+svg .lex-entry, svg .lex-body {
+  fill: #000;
+}
+svg .lex-entry:hover {
+  background-color: #000;
+  fill: #000;
+}
+svg .tag-item {
+  fill: #000;
+  font-weight: bold;
+}
+svg rect.lex {
+  fill: transparent;
+  transition: 0.3s;
+  rx: 10;
+  height: 3em;
+  padding: 5px;
+}
+svg rect.lex:hover, svg rect.lex:has(~ :hover) {
+  fill: #000;
+}
+svg path {
+  stroke: #000;
+}
+
+.tag-item, [id=entry-counter] {
+  color: #000;
+  background-color: #000;
+}
+
+.pronunciation {
+  color: #000;
+}
+
+.lect {
+  color: #000;
+}
+
+hr {
+  border: 1px solid #000;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+label {
+  color: #000;
+}
+
+textarea, input {
+  color: #000 !important;
+  background-color: #000;
+}
+textarea.pronunciation, input.pronunciation {
+  background-color: transparent;
+}
+textarea.pronunciation:hover, input.pronunciation:hover {
+  background-color: #000;
+}
+textarea[type=checkbox], input[type=checkbox] {
+  background-color: transparent;
+  border: 0.15em solid #000;
+}
+textarea[type=checkbox]::before, input[type=checkbox]::before {
+  background-color: #000;
+}
+
+td {
+  border: 1px solid #000;
+}
+
+tr:nth-child(odd) {
+  background-color: #000;
+}
+tr:nth-child(even) {
+  background-color: #1a1a1a;
+}
+
+::-webkit-resizer {
+  background-color: #000;
+}
+::-webkit-resizer:hover {
+  background-color: #000;
+}
+::-webkit-scrollbar-track {
+  background-color: #000;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #000;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #000;
+}
+
+a {
+  color: #000;
+  transition: 0.5s;
+}
+a:hover {
+  color: #000;
+}
+
+.ce-toolbar__settings-btn, .ce-toolbar__plus {
+  color: #000 !important;
+}
+.ce-toolbar:hover {
+  background-color: #000 !important;
+}
+.ce-conversion-tool {
+  background-color: #000 !important;
+}
+.ce-conversion-toolbar {
+  background-color: #000 !important;
+}
+.ce-conversion-tool:hover {
+  background-color: #000 !important;
+}
+.ce-popover, .ce-popover--opened {
+  background-color: #000 !important;
+}
+.ce-popover__item {
+  background-color: #000 !important;
+}
+.ce-popover__item:hover {
+  background-color: #000 !important;
+}
+.ce-inline-tool {
+  background-color: #000 !important;
+}
+.ce-inline-tool:hover {
+  background-color: #000 !important;
+}
+.ce-inline-toolbar, .ce-inline-toolbar__dropdown, .ce-inline-toolbar__buttons {
+  background-color: #000 !important;
+}
+.ce-paragraph[data-placeholder]:empty::before {
+  color: #000 !important;
+}
+
+.tc-popover {
+  --color-border: #000 !important;
+  --color-background: #000 !important;
+  --color-background-hover: #000 !important;
+  --color-background-confirm: #812b2b !important;
+  --color-background-confirm-hover: #a12929 !important;
+  --color-text-confirm: white !important;
+}
+.tc-wrap {
+  --color-background: rgba(255, 255, 255, 0.396) !important;
+  --color-text-secondary: #000 !important;
+  --color-border: #000 !important;
+}
+
+table {
+  border-color: #000;
+}
+
+.inflection td {
+  border-color: #000 !important;
+  background-color: transparent !important;
+}
+.inflection tr {
+  background-color: transparent !important;
+}
+
+/*# sourceMappingURL=theme_styles.css.map */
