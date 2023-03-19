@@ -28,8 +28,8 @@
       "icon": "src/res/Quill Icon.icns"
     },
     "nsis": {
-      "installerIcon": "src/rsrc/Quill Icon.ico",
-      "installerHeaderIcon": "src/rsrc/Quill Icon.ico"
+      "installerIcon": "src/res/Quill Icon.ico",
+      "installerHeaderIcon": "src/res/Quill Icon.ico"
     },
     "files": [
       "src/**/*",
