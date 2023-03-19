@@ -29,7 +29,10 @@ const createWindow = () => {
             contextIsolation: false, // modules such as path and fs in renderer processes.
         },
     });
-    loadingWindow.setWindowButtonVisibility(false);
+
+    if (process.platform === 'darwin') {
+        loadingWindow.setWindowButtonVisibility(false);
+    }
     loadingWindow.loadFile(path.join(__dirname, 'loading.html'));
 
     // Create the browser window.
