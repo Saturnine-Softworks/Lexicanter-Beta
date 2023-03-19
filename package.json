@@ -1,6 +1,6 @@
 {
   "name": "lexicanterbeta",
-  "productName": "βLexicanter",
+  "productName": "Lexicanter-Beta",
   "version": "2.0.0",
   "description": "A lexicon management tool for constructed languages.",
   "main": "src/index.js",
@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "com.lexicanterbeta.app",
-    "productName": "βLexicanter",
+    "productName": "Lexicanter-Beta",
     "win": {
       "target": "nsis",
       "icon": "src/res/Quill Icon.ico"
