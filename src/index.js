@@ -24,7 +24,7 @@ const createWindow = () => {
         titleBarOverlay: true,
         show: true,
         webPreferences: {
-            devTools: isDev,
+            devTools: true,
             nodeIntegration: true, // these two settings are required in order to use
             contextIsolation: false, // modules such as path and fs in renderer processes.
         },
