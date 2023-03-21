@@ -4,7 +4,7 @@
  * See GNU General Public License Version 3.
  */
 
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu, MenuItem } = require('electron');
 const path = require('path');
 
 const { autoUpdater } = require('electron-updater');
@@ -24,7 +24,7 @@ const createWindow = () => {
         titleBarOverlay: true,
         show: true,
         webPreferences: {
-            devTools: true,
+            devTools: isDev,
             nodeIntegration: true, // these two settings are required in order to use
             contextIsolation: false, // modules such as path and fs in renderer processes.
         },
@@ -44,7 +44,7 @@ const createWindow = () => {
         titleBarOverlay: true,
         show: false,
         webPreferences: {
-            devTools: isDev,
+            devTools: true,
             nodeIntegration: true, // these two settings are required in order to use
             contextIsolation: false, // modules such as path and fs in renderer processes.
         },
@@ -115,6 +115,25 @@ const createWindow = () => {
         app.quit();
     });
 };
+
+const menu = new Menu();
+menu.append(new MenuItem({
+    label: 'Lexicanter',
+    submenu: [{
+        label: 'About Lexicanter',
+        role: 'about',
+    }]
+}));
+menu.append(new MenuItem({
+    role: 'editMenu',
+}));
+menu.append(new MenuItem({
+    role: 'viewMenu',
+}));
+menu.append(new MenuItem({
+    role: 'windowMenu',
+}));
+Menu.setApplicationMenu(menu);
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

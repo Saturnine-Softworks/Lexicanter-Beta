@@ -14,7 +14,6 @@ function applyRule(rule: string, input: string, categories): string {
     const commaUnionRule = /\s*,\s*/g;
     const spaceRule = /\s+/g;
     const nullRule = /[∅⦰]/g;
-    const escapeRegex = /([-[\]{}()^#*+?.,$|])/g;
 
     pattern = pattern
         .replaceAll(boundaryRule, '\\s')
@@ -22,11 +21,9 @@ function applyRule(rule: string, input: string, categories): string {
         .replaceAll(unionRule, '(?:$1)')
         .replaceAll(commaUnionRule, '|')
         .replaceAll(spaceRule, '')
-        .replaceAll(escapeRegex, '\\$1')
     ;
     sub = sub
         .replaceAll(spaceRule, '')
-        .replaceAll(escapeRegex, '\\$1')
     ;
     context = context
         .replaceAll(boundaryRule, '\\s')
@@ -34,7 +31,6 @@ function applyRule(rule: string, input: string, categories): string {
         .replaceAll(unionRule, '(?:$1)')
         .replaceAll(commaUnionRule, '|')
         .replaceAll(spaceRule, '')
-        .replaceAll(escapeRegex, '\\$1')
     ;
 
     //SECTION - Construct RegExp rule string and map category appearances

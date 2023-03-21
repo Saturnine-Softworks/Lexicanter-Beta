@@ -115,6 +115,5 @@ export function alphabetPrecheck(word: string): word is valid {
         word = word.replaceAll(token, '');
         // debug.log(`alphabetPrecheck: ${word} | ${token}`, false);
     });
-    return !word;
+    return !word.replaceAll(/\s+/g, '');
 }
-

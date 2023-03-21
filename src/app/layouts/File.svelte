@@ -19,7 +19,7 @@
      * @param {Object} contents - The contents of the opened file.
      */
     function read_contents (contents) {
-        if (typeof contents.Version === 'number') {
+        if (typeof contents.Version === 'number' || contents.Version === '1.8.x') {
             try { openLegacy[contents.Version](contents); }
             catch (err) {
                 // TODO: window.alert() freezes text inputs on Windows computers and all instances need to be replaced with a custom dialog.

@@ -77,7 +77,7 @@
                 tags: sense.tags.join(' '),
                 lects: sense.lects,
             }));
-            debug.logObj(senses, 'senses');
+            // debug.logObj(senses, 'senses');
             delete $Language.Lexicon[word];
             $Language.Lexicon = {...$Language.Lexicon}; // assignment trigger
         }
@@ -204,7 +204,7 @@
                     let has_exact_match = false;
                     for (let tag of $Language.Lexicon[word].Senses.map(sense => sense.tags).flat()) {
                         for (let a of tags_search) {
-                            debug.log('`a` | `tag` : ' + a + ' | ' + tag, false)
+                            // debug.log('`a` | `tag` : ' + a + ' | ' + tag, false)
                             // tags
                             if (a[0] === '!') {
                                 needs_exact_match = true;
@@ -256,11 +256,14 @@
             <button class="collapser" on:click={ () => collapsedPanel = !collapsedPanel }></button>
             <div class:collapsed={collapsedPanel} class='text-center scrolled' style="height: 100%; overflow-x: hidden">
                 <label for="wrd-input">New Word</label>
-                <input id="wrd-input" type="text" bind:value={$wordInput} on:input={() => {
-                    Object.keys($pronunciations).forEach(lect => {
-                        $pronunciations[lect] = get_pronunciation($wordInput, lect);
-                    });
-                }}>
+                <input id="wrd-input" type="text"
+                    bind:value={$wordInput}
+                    on:input={() => {
+                        Object.keys($pronunciations).forEach(lect => {
+                            $pronunciations[lect] = get_pronunciation($wordInput, lect);
+                        });
+                    }}
+                >
 
                 {#if $Language.UseLects}
                     {#each lectSet as lect}
@@ -286,6 +289,7 @@
                         on:remove={() => {
                             senses = senses.filter((_, j) => j !== i);
                         }}
+                        on:commit={() => { addWord(false); }}
                     />
                 {/each}
                 <button class="hover-highlight hover-shadow" id="add-sense-button" on:click={() => {
