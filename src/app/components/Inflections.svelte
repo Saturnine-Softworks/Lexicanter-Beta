@@ -1,5 +1,6 @@
 <script lang='ts'>
     import { Language } from "../stores";
+    import * as diagnostics from "../utils/diagnostics";
     import { blur } from 'svelte/transition';
     import * as sca from "../utils/sca";
     export let word: string;
@@ -13,7 +14,16 @@
     }
 
     let data = structuredClone($Language.Inflections)
-        .filter(inflection => (inflection.tags[0]? inflection.tags.some(tag => tags.includes(tag)) : true) && word.match(new RegExp(inflection.filter)))
+        .filter(inflection => {
+            let filter: RegExp;
+            try {
+                filter = new RegExp(inflection.filter);
+            } catch (e) {
+                diagnostics.debug.error(`Invalid regular expression: /${inflection.filter}/`);
+                filter = /.+/;
+            }
+            return (inflection.tags[0]? inflection.tags.some(tag => tags.includes(tag)) : true) && word.match(filter)
+        })
         .map(inflection => inflection.tables.blocks);
 
     data.forEach((blocks, i) => {

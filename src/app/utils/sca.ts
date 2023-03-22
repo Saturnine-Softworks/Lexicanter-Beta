@@ -1,16 +1,21 @@
 import * as diagnostics from './diagnostics';
+import { Language } from '../stores';
+import { get } from 'svelte/store';
 const vex = require('vex-js');
 
 function applyRule(rule: string, input: string, categories): string {
+    const caseSensitive = get(Language).CaseSensitive;
+    const flags = caseSensitive ? 'g' : 'gi';
+
     // eslint-disable-next-line prefer-const
     let [pattern, sub, context] = rule.split('/');
     input = ' ' + input + ' ';
     let result = input;
 
     //SECTION - Preprocess the rule
-    const unionRule = /\{(.+)\}/gi;
-    const boundaryRule = /\^|#/gi;
-    const negativeRule = /\{!(.+(?:\s+.+)*)\}/gi;
+    const unionRule = /\{(.+)\}/g;
+    const boundaryRule = /\^|#/g;
+    const negativeRule = /\{!(.+(?:\s+.+)*)\}/g;
     const commaUnionRule = /\s*,\s*/g;
     const spaceRule = /\s+/g;
     const nullRule = /[∅⦰]/g;
@@ -48,7 +53,7 @@ function applyRule(rule: string, input: string, categories): string {
         let matchContext = [];
         if (contextCatMap.length > 0) {
             contextCatMap.forEach(symbol => {
-                const matchMatches = match.match(new RegExp(`(?:${categories[symbol].join('|')})`, 'gi'));
+                const matchMatches = match.match(new RegExp(`(?:${categories[symbol].join('|')})`, flags));
                 matchContext.push([symbol, matchMatches]);
             });
             matchContext = [...new Set(matchContext)].sort((a, b) => b.length - a.length);
@@ -72,7 +77,7 @@ function applyRule(rule: string, input: string, categories): string {
                 testRegString = testRegString.replaceAll(symbol, `(?:${values.join('|')})`);
             });
             
-            if (input.match(new RegExp(testRegString, 'gi'))) {
+            if (input.match(new RegExp(testRegString, flags))) {
                 expandedContext = testContext;
             } else {
                 expandedContext = expandedContext.replace(m, '');
@@ -90,7 +95,7 @@ function applyRule(rule: string, input: string, categories): string {
                 testRegString = testRegString.replaceAll(symbol, `(?:${values.join('|')})`);
             });
             
-            if (input.match(new RegExp(testRegString, 'gi'))) {
+            if (input.match(new RegExp(testRegString, flags))) {
                 expandedContext = testContext;
             } else {
                 expandedContext = expandedContext.replace(m, '');
@@ -133,13 +138,13 @@ function applyRule(rule: string, input: string, categories): string {
     }
 
     //SECTION - Apply the rule
-    const matches: string[] = input.match(new RegExp(regString, 'gi'));
+    const matches: string[] = input.match(new RegExp(regString, flags));
     if (matches && sub.includes('_')) {
         matches.forEach(match => {
             const slice = getSlice(match);
             result = result.replace(slice, sub.replaceAll('_', slice));
         });
-    } else result = result.replaceAll(new RegExp(regString, 'gi'), `$1${sub}$2`);
+    } else result = result.replaceAll(new RegExp(regString, flags), `$1${sub}$2`);
     
     if (!!subCatMap[0] && !!patternCatMap[0]) {
         let catMap: string[][] = [];

@@ -2,6 +2,7 @@
 const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const vex = require('vex-js');
 import { get } from 'svelte/store';
 import type { OutputData } from '@editorjs/editorjs';
 import type * as Lexc from '../types';
@@ -100,45 +101,55 @@ function editorjsToHTML(data: OutputData, container: HTMLElement): HTMLElement {
  * in the user's Lexicons folder. It also saves a timestamped backup copy.
  */
 export async function saveFile () {
-    if (!Lang().Name.trim()) {
-        const name = window.prompt(
-            'Please enter a file name before saving.'
-        );
-        Lang().Name = name;
-    }
-    const exports = await collectExportData();
-    try {
-        userData(user_path => {
-            const lexiconFolder = `${user_path}${path.sep}Lexicons${path.sep}`;
-            const backupsFolder = `${user_path}${path.sep}Backups${path.sep}`;
-            const timestamp = new Date().toString().split(' GMT')[0].replaceAll(':', '⦂');
-            if (!fs.existsSync(lexiconFolder)) {
-                fs.mkdirSync(lexiconFolder);
+    const finish = async () => {
+        const exports = await collectExportData();
+        try {
+            userData(user_path => {
+                const lexiconFolder = `${user_path}${path.sep}Lexicons${path.sep}`;
+                const backupsFolder = `${user_path}${path.sep}Backups${path.sep}`;
+                const timestamp = new Date().toString().split(' GMT')[0].replaceAll(':', '꞉');
+                if (!fs.existsSync(lexiconFolder)) {
+                    fs.mkdirSync(lexiconFolder);
+                }
+                if (!fs.existsSync(backupsFolder)) {
+                    fs.mkdirSync(backupsFolder);
+                }
+                fs.writeFileSync(
+                    `${lexiconFolder}${Lang().Name}.lexc`,
+                    exports,
+                    'utf8'
+                );
+                fs.writeFileSync(
+                    `${backupsFolder}${Lang().Name} @ ${timestamp}.lexc`,
+                    exports,
+                    'utf8'
+                );
+            });
+            if (!get(autosave)) {
+                vex.dialog.alert('The file has been saved.');
+            } else {
+                new Notification(`The ${Lang().Name} file has been auto-saved.`);
             }
-            if (!fs.existsSync(backupsFolder)) {
-                fs.mkdirSync(backupsFolder);
-            }
-            fs.writeFileSync(
-                `${lexiconFolder}${Lang().Name}.lexc`,
-                exports,
-                'utf8'
+        } catch (err) {
+            window.alert(
+                'There was a problem saving your file. Please contact the developer.'
             );
-            fs.writeFileSync(
-                `${backupsFolder}${Lang().Name} @ ${timestamp}.lexc`,
-                exports,
-                'utf8'
-            );
-        });
-        if (!get(autosave)) {
-            window.alert('The file has been saved.');
-        } else {
-            new Notification(`The ${Lang().Name} file has been auto-saved.`);
+            console.log(err);
         }
-    } catch (err) {
-        window.alert(
-            'There was a problem saving your file. Please contact the developer.'
-        );
-        console.log(err);
+    };
+
+    if (!Lang().Name.trim()) {
+        vex.dialog.prompt({
+            message: 'Please enter a file name before saving.',
+            callback: (response: string | false) => {
+                if (response) {
+                    Lang().Name = response.trim();
+                    finish();
+                }
+            }
+        });
+    } else {
+        finish();
     }
 }
 

@@ -29,11 +29,12 @@
                             {variant}
                         </p>
                         <Pronunciations pronunciations={$Language.Phrasebook[$selectedCategory][phrase].variants[variant].pronunciations} />
-                        <p class="prelined">
+                        <p class="prelined" style='margin: 0 1rem 0.5rem 1rem'>
                             {$Language.Phrasebook[$selectedCategory][phrase].variants[variant].description}
                         </p>
                     </div>
                 {/each}
+                <br>
             </div>
         {/each}
     {/if}

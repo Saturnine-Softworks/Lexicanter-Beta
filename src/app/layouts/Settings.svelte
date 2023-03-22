@@ -229,24 +229,43 @@
                         try {
                             contents = JSON.parse(data);
                             if (!String(contents.Version).match(/^2\.[0-9]*\.[0-9]*$/)) {
-                                vex.dialog.alert('This file is not compatible with the current version of Lexicanter. Please contact the developer; the file may be recoverable.');
+                                vex.dialog.alert(`
+                                    This file was saved with an old version of the app (~${contents.Version})
+                                    and is not compatible with the current version of Lexicanter. Please contact
+                                    the developer; the file may be recoverable.
+                                `);
                                 return;
                             }
-                            $Language.Relatives = {
-                                ...$Language.Relatives,
-                                [contents.Name]: contents.Lexicon
-                            };                        
-                            // add an etymology entry for each word in the relative lexicon
-                            for (const word in contents.Lexicon) {
-                                if (!$Language.Lexicon[word] && !$Language.Etymologies[word]) {
-                                    $Language.Etymologies[word] = {
-                                        descendants: [],
-                                        source: contents.Name,
-                                    };
+                            const commit = (overwrite: boolean) => {                  
+                                // add an etymology entry for each word in the relative lexicon
+                                for (const word in contents.Lexicon) {
+                                    if (!$Language.Lexicon[word] && (!$Language.Etymologies[word] || overwrite)) {
+                                        $Language.Etymologies[word] = {
+                                            descendants: [],
+                                            source: contents.Name,
+                                        };
+                                    }
                                 }
                             }
+                            if (contents.Name in $Language.Relatives) {
+                                vex.dialog.confirm({
+                                    message: `A relative lexicon with the name "${contents.Name}" already exists. Would you like to overwrite it?`,
+                                    callback: (response: boolean) => {
+                                        if (response) {
+                                            $Language.Relatives[contents.Name] = contents.Lexicon;
+                                            commit(true);
+                                        }
+                                    }
+                                })
+                            } else {
+                                $Language.Relatives = {
+                                    ...$Language.Relatives,
+                                    [contents.Name]: contents.Lexicon
+                                };
+                                commit(false);
+                            }
                         } catch (err) {
-                            vex.dialog.alert('There was an issue loading your file. Please contact the developer.');
+                            vex.dialog.alert('There was an issue loading the file. Please contact the developer.');
                             return;
                         }
                     });
@@ -290,6 +309,8 @@
                     <optgroup label="The Maarz Collection">
                         <option value="styles/purple_maar.css">☾ Purple Maar</option>
                         <option value="styles/terminal_green.css">☾ Terminal</option>
+                        <option value="styles/midnight.css">☾ Midnight</option>
+                        <option value="styles/bone.css">☀ Bone</option>
                     </optgroup>
                 </select>
             </label>
@@ -313,13 +334,16 @@
                         <div class="narrow">
                             <p style="display: inline-block" id={`${lectIndex}`}>{lect}</p>
                             <button class="hover-highlight hover-shadow" style="display: inline-block" on:click={()=>{
+                                if ($Language.Lects.length === 1) {
+                                    vex.dialog.alert('You cannot delete the last lect.');
+                                    return;
+                                };
                                 vex.dialog.confirm({
                                     message: `Are you sure you want to delete the lect "${lect}"? This action cannot be undone.`,
                                     callback: function (response) {
                                         if (response) {
                                             deleteLect(lect, lectIndex);
-                                            logAction(`Deleted lect: ${lect}`);
-                                            // debug.log(`Deleted lect: ${lect}`)
+                                            debug.log(`Deleted lect: ${lect}`);
                                         }
                                     }
                                 });
@@ -333,8 +357,7 @@
                                             return debug.log('User cancelled the Edit Lect Name dialog.');
                                         }
                                         changeLectName(lect, response, lectIndex);
-                                        logAction(`Edited lect name: ${lect} to ${response}`);
-                                        // debug.log(`Edited lect name: ${lect} to ${response}`)
+                                        debug.log(`Edited lect name: ${lect} to ${response}`);
                                     }
                                 })
                             }}> ✎ </button>
@@ -350,7 +373,7 @@
                                                     }
                                                 });
                                             };
-                                            logAction(`Added all words to lect: ${lect}`);
+                                            debug.log(`Added all words to lect: ${lect}`);
                                             vex.dialog.alert(`Added all senses of all words to the lect ‘${lect}’.`);
                                         }
                                     }

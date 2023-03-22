@@ -40,7 +40,6 @@
     {/if}
     <label>Definition
         <textarea rows='4' bind:value={definition} on:keydown={e => {
-            console.log(e.key, e.altKey);
             if (e.key === 'Enter' && e.altKey) commit();
         }}></textarea>
     </label>

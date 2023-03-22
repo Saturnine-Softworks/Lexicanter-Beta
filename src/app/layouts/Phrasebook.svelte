@@ -220,7 +220,7 @@
                 {/each}
             </div>
         </div>
-        <div class="container column">
+        <div class="container column" style='overflow: hidden'>
             <!-- Search Fields -->
             <div class="row">
                 <div class="column search-container">
@@ -257,7 +257,7 @@
                 {/if}
             </div>
             <!-- Book -->
-            <div class="column scrolled" id="phrasebook-body" style="max-height: 90%;">
+            <div class="column scrolled" id="phrasebook-body" style="max-height: 88%;">
                 {#if !!Object.keys($Language.Phrasebook).length}
                     {#each phraseKeys as phrase}
                         <PhraseEntry phrase={phrase} on:edit={() => editPhrase(phrase)} />

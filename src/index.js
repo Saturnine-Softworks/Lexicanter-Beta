@@ -37,7 +37,7 @@ const createWindow = () => {
 
     // Create the browser window.
     var mainWindow = new BrowserWindow({
-        width: 900,
+        width: 1200,
         height: 900,
         autoHideMenuBar: true,
         titleBarStyle: 'hidden',
