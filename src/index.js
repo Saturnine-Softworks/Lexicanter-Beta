@@ -59,7 +59,7 @@ const createWindow = () => {
     });
     // Set macOS dock icon
     if (process.platform === 'darwin') {
-        app.dock.setIcon(path.join(__dirname, 'res/Quill Icon.png'));
+        app.dock.setIcon(path.join(__dirname, 'res/alembic-beta.png'));
     }
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {

@@ -99,7 +99,7 @@
             $Language.Lexicon[word] = <Lexc.Word> {
                 pronunciations: <Lexc.EntryPronunciations> (() => {
                     const obj: Lexc.EntryPronunciations = {};
-                    $Language.Lects.forEach(lect => {
+                    Object.keys($pronunciations).filter(key => senses.map(sense => sense.lects).flat().includes(key)).forEach(lect => {
                         obj[lect] = {
                             ipa: $pronunciations[lect].trim(),
                             irregular: $pronunciations[lect].trim() !== get_pronunciation(word, lect),
@@ -140,6 +140,7 @@
         let word = $wordInput.trim()
         if (!word) return;
         if (!senses[0].definition) return;
+        if (!senses.map(sense => sense.lects).flat().length) return;
         if (!alphabetPrecheck(word)) {
             vex.dialog.confirm({
                 message: `The word contains characters not present in the alphabet. Are you sure you want to add it?`,
