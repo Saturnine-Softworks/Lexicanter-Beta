@@ -4,7 +4,7 @@
  * See GNU General Public License Version 3.
  */
 
-const { app, BrowserWindow, ipcMain, dialog, shell, Menu, MenuItem } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 
 const { autoUpdater } = require('electron-updater');
@@ -41,7 +41,7 @@ const createWindow = () => {
         height: 900,
         autoHideMenuBar: true,
         titleBarStyle: 'hidden',
-        titleBarOverlay: true,
+        titleBarOverlay: false,
         show: false,
         webPreferences: {
             devTools: true,
@@ -104,6 +104,9 @@ const createWindow = () => {
     ipcMain.handle('debug', (_, message) => {
         console.log(message);
     });
+    ipcMain.handle('platform', () => {
+        return process.platform;
+    });
 
     mainWindow.on('close', e => {
         mainWindow.webContents.send('app-close');
@@ -115,25 +118,6 @@ const createWindow = () => {
         app.quit();
     });
 };
-
-const menu = new Menu();
-menu.append(new MenuItem({
-    label: 'Lexicanter',
-    submenu: [{
-        label: 'About Lexicanter',
-        role: 'about',
-    }]
-}));
-menu.append(new MenuItem({
-    role: 'editMenu',
-}));
-menu.append(new MenuItem({
-    role: 'viewMenu',
-}));
-menu.append(new MenuItem({
-    role: 'windowMenu',
-}));
-Menu.setApplicationMenu(menu);
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

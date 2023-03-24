@@ -303,6 +303,7 @@
                         <option value="styles/marine.css">☾ Marine</option>
                         <option value="styles/glade.css">☾ Glade</option>
                         <option value="styles/pomegranate.css">☾ Pomegranate</option>
+                        <option value="styles/juniper.css">☀ Juniper</option>
                         <option value="styles/leatherbound.css">☀ Leatherbound</option>
                         <option value="styles/wisteria.css">☀ Wisteria</option>
                     </optgroup>
@@ -433,83 +434,6 @@
             <label>Show Automatic Inflection Features
                 <input type="checkbox" bind:checked={$Language.ShowInflection}/>
             </label>
-
-            <br><hr/><br>
-
-            <p class="info">
-                Join Saturn's Sojourn, the home of the Lexicanter on <a rel="noreferrer" target="_blank" href="https://discord.gg/uDk2XDhh8K">Discord</a>!
-            </p>
-            <p class="info">
-                Support the continued developement of the app as a <a rel="noreferrer" target="_blank" href="https://patreon.com/saturnine_softworks">patron</a>,
-            </p>
-            <p class="info">
-                or by buying me a <a rel="noreferrer" target="_blank" href="https://ko-fi.com/saturnine_softworks">coffee</a>!
-            </p>
-            
-            <br><hr/><br>
-
-            <p><u>New in 1.10</u></p>
-            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
-                • Added three new themes: Pomegranate, Wisteria, and Terminal. <br>
-                • The word entry panel in the Lexicon tab is now collapsible. <br>
-                • The Phrasebook now has active overwrite protection to prevent you from deleting your work by mistake. <br>
-                • You can now search for an exact whole-word match in definitions and tags fields by using <code>!</code> as a prefix. <br>
-                • For HTML exports, the appearance on mobile devices has been improved. <br>
-                • Minor bug fixes for opening new windows from the File tab. <br>
-                • Lots of uner-the-hood changes for the app's appearance in preparation for future features.
-            <br><br>
-            </p>
-            <p><u>Patch 1.9.5</u></p>
-            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
-                • Fixed a bug causing app-quit to be impossible sometimes. <br>
-                • Fixed some minor bugs with the styles. <br>
-                • Fixed a bug causing monospace toggle in the docs tab to be undoable. <br>
-                • Fixed a bug causing external hyperlinks not to use the preferred browser, and is some cases not open at all.
-            <br><br>
-            </p>
-            <p><u>Patch 1.9.4</u></p>
-            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
-                • You can now hyperlink to entries in the lexicon. The link format is <code>lex::word</code>. <br>
-                • The documentation tab would previously not adjust to the width of the window. That has been fixed.
-            <br><br>
-            </p>
-            <p><u>New in 1.9</u></p>
-            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
-                • Overhauled the Documentation tab, which now uses integrated <a href="https://editorjs.io/" 
-                    target="_blank" rel="noreferrer">EditorJS</a> technology. <br> Markdown is no longer supported in this tab, 
-                    in favor of the new WYSIWYG style with a toolbar visible when you highlight text. <br>
-                • Note: The first time you load a file from an older version, there may be some formatting quirks. 
-                    Most of these should sort themselves out after saving in the new version and re-loading. 
-                    Please contact the developer if you run into persistent issues. <br>
-                • Fixed a bug with the Open New Window button which caused it to fail to open new windows. <br>
-                • The button to edit phrasebook entries has been change to right-click instead of left-click to
-                    make it more difficult to accidentally overwrite work in progress, and to allow for
-                    highlighting text. <br>
-                • An HTML Docs-Only export option has been added.
-            <br><br>
-            </p>
-            <p><u>Patch 1.8.14</u></p>
-            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
-                • Fixed a few minor bugs with markdown parsing.<br>
-                • Added monospace markdown with <code>``this``</code> syntax.<br>
-                • Fixed a reported bug which affected the orthography testing area.
-            <br><br>
-            <p><u>New in 1.8</u></p>
-            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
-                • File storage has been migrated to make auto-save possible. <br>
-                • Categories can now be defined and used in your Pronunciations rules. See the <a
-                    target="_blank" href="https://lexicanter.com/docs" rel="noreferrer">docs page</a> for more info.<br>
-                • Five new color themes: Light, Marine, Glade, Leatherbound, and Purple Maar (contributed by <a
-                    target="_blank" href="https://linktr.ee/maarzcreative" rel="noreferrer">Maarz</a>). <br>
-                • You can now load in your own custom CSS color themes.<br>
-                • Definitions, descriptions, and documentation sections now support simple <a target="_blank"
-                    href="https://lexicanter.com/docs#markdown" rel="noreferrer">markdown</a>. <br>
-                • There's a new space in the Phonology tab to test your pronunciation rules. <br>
-                • Tag searches no longer require an exact match. <br>
-                • Several minor bug fixes, including one reported about tables being editable in the HTML
-                export.<br>
-            </p>
-            <br>
         </div>
     </div>
 </div>

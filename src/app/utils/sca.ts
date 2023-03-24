@@ -3,7 +3,7 @@ import { Language } from '../stores';
 import { get } from 'svelte/store';
 const vex = require('vex-js');
 
-function applyRule(rule: string, input: string, categories): string {
+function applyRule(rule: string, input: string, categories: {[index: string]: string[]}): string {
     const caseSensitive = get(Language).CaseSensitive;
     const flags = caseSensitive ? 'g' : 'gi';
 
@@ -19,11 +19,41 @@ function applyRule(rule: string, input: string, categories): string {
     const commaUnionRule = /\s*,\s*/g;
     const spaceRule = /\s+/g;
     const nullRule = /[∅⦰]/g;
+    const Symbols: string[] = [
+        '∆', '∇', '⊂', '⊃', '⊆', '⊇', '⊄', '⊅',
+        '⊈', '⊉', '⊊', '⊋', '⊍', '⊎', '⊏', '⊐',
+        '⊑', '⊒', '⊓', '⊔', '⊕', '⊖', '⊗', '⊘',
+        '⊙', '⊚', '⊛', '⊜', '⊝', '⊞', '⊟', '⊠',
+        '⊡', '⊢', '⊣', '⊤', '⊥', '⊦', '⊧', '⊨',
+        '⊩', '⊪', '⊫', '⊬', '⊭', '⊮', '⊯', '⊰',
+        '⊱', '⊲', '⊳', '⊴', '⊵', '⊶', '⊷', '⊸',
+        '⊹', '⊺', '⊻', '⊼', '⊽', '⊾', '⊿', '⋀',
+        '⋁', '⋂', '⋃', '⋄', '⋇', '⋈', '⋉', '⋊',
+        '⋋', '⋌', '⋍', '⋎', '⋏', '⋐', '⋑', '⋒',
+        '⋓', '⋔', '⋕', '⋖', '⋗', '⋘', '⋙', '⋚',
+        '⋛', '⋜', '⋝', '⋞', '⋟', '⋠', '⋡', '⋢',
+        '⋣', '⋤', '⋥', '⋦', '⋧', '⋨', '⋩', '⋪',
+        '⋫', '⋬', '⋭', '⋮', '⋯', '⋰', '⋱', '⋲',
+        '⋳', '⋴', '⋵', '⋶', '⋷', '⋸', '⋹', '⋺',
+        '⋻', '⋼', '⋽', '⋾', '⌁', '⌂', '⌃', '⌄',
+        '⌅', '⌆', '⌇', '⌈', '⌉', '⌊', '⌋', '⌑', 
+        '⌒', '⌓', '⌔', '⌕', '⌖', '⌗', '⌘', '⌙',
+    ];
+    let i = 0;
+    pattern.match(unionRule)?.forEach((match) => {
+        categories[Symbols[i]] = match.replace(unionRule, '$1').split(commaUnionRule);
+        pattern = pattern.replace(match, Symbols[i]);
+        i++;
+    });
+    sub.match(unionRule)?.forEach((match) => {
+        categories[Symbols[i]] = match.replace(unionRule, '$1').split(commaUnionRule);
+        sub = sub.replace(match, Symbols[i]);
+        i++;
+    });
 
     pattern = pattern
         .replaceAll(boundaryRule, '\\s')
         .replaceAll(negativeRule, '(?:(?!$1).)')
-        .replaceAll(unionRule, '(?:$1)')
         .replaceAll(commaUnionRule, '|')
         .replaceAll(spaceRule, '')
     ;
@@ -243,52 +273,10 @@ export function parseRules(rules: string): {rules: string[], categories: {[index
 
 
 /* const rules = `
-Regular Vowels
-V :: 𐌰, 𐌴, 𐌰𐌹, 𐌰𐌿, 𐍉, 𐌹, 𐌴𐌹, 𐌿
-A :: a, e, ɛ, ɔ, o, i, i, u
-V > A
-
-X :: 𐌲𐌺, 𐌻, 𐌽, 𐌲, 𐌲𐌲, 𐌽𐌳, 𐌽𐍄, 𐌺, 𐍂, 𐍃, 𐌶, 𐍃𐌺, 𐍄, 𐍅, 𐍇, 𐌳, 𐌸
-H :: ɲdʑ, ʎ, ɲ, ʑ, dʑ, dʐ, ndʐ, tɕ, ʐ, ʂ, ʐ, ɕ, tʂ, ɥ, ɕ, dʐ, x
-X > H / _𐌴𐌹
-
-Consonants
-C :: 𐌱, 𐌲, 𐌳, 𐌶, 𐌸, 𐌺, 𐌻, 𐌾, 𐍀, 𐍂, 𐍃, 𐍄, 𐍅,  𐍆, 𐍇, 𐍈, 𐌵, 𐌲𐍅, 𐌷
-K :: v, ɣ, ð, z, θ, k, l, j, p, r, s, t, w, f, x, ʍ, kʷ, gʷ, ∅
-C > K
-
-Regular Digraphs
-J :: 𐌶, 𐌴𐌹, 𐌺, 𐍂, 𐍃, 𐍃𐌺, 𐍄, 𐍅, 𐍇, 𐌲, 𐌲𐌲, 𐌲𐌺, 𐌳, 𐌽𐌳, 𐌽, 𐌽𐍄, 𐌻
-Y :: ʐ, x, tɕ, ʐ, ʂ, ɕ, tʂ, ɥ, ɕ, ʑ, dʑ, ɲdʑ, dʐ, dʐ, ɲ, ndʐ, ʎ
-J𐌾 > Y∅
-
-𐌱 𐌲 𐌳 Rules
-B :: 𐌱, 𐌲, 𐌳
-P :: b, g, d
-F :: v, ɣ, ð
-CB > KP
-C𐌳𐌴𐌹 > Kdʐi
-BB > P∅
-^B > ^P
-B > F
-^𐌲𐌴𐌹 > dʑi
-^𐌲𐌾 > dʑ
-𐌲𐌲𐌲 > ɣg
-𐌲𐌵 > ŋgʷ
-𐌲𐌲𐍅 > gʷ
-
-Special Orthographs
-𐌲𐌺 > ŋg
-𐌼 > m
-𐌼𐌱 > b
-𐌼𐍀 > mb
-𐌽 > n
-𐌽𐌳 > d
-𐌽𐍄 > nd
+{a, e} > {i, o} / _s
 `;
-const input = '𐍃𐌴𐌹';
+const input = 'mesarase';
 console.log(
     input, '-->',
     applyRules(parseRules(rules).rules, input, parseRules(rules).categories),
-);
- */
+); */

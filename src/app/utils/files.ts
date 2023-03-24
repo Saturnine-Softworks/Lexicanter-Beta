@@ -811,6 +811,39 @@ export const openLegacy = {
      * This function can open 1.9 - 1.11 files.
      */
     1.9: (contents) => {
+        Language.set({ // default values
+            Version: '2.0.0',
+            Name: 'Unnamed Language',
+            CaseSensitive: false,
+            IgnoreDiacritics: true,
+            ShowEtymology: false,
+            ShowInflection: false,
+            Inflections: [],
+            UseLects: false,
+            HeaderTags: '',
+            Alphabet: 'a b c d e f g h i j k l m n o p q r s t u v w x y z',
+            Lexicon: <Lexc.Lexicon> { },
+            Etymologies: <Lexc.Etymologies> { },
+            Relatives: { },
+            Pronunciations: <Lexc.Pronunciations> {
+                General: 'place > holder'
+            },
+            Phonotactics: <Lexc.Phonotactics> {
+                General: <Lexc.PhonotacticsLect> {
+                    Onsets: '',
+                    Medials: '',
+                    Codas: '',
+                    Vowels: '',
+                    Illegals: '',
+                }
+            },
+            Lects: ['General'],
+            Phrasebook: <Lexc.Phrasebook> { },
+            Docs: <OutputData> {
+                blocks: [ ]
+            },
+            Diagnostics: <Lexc.Diagnostic[]> [ ]
+        });
         try {
             for (const key in contents.Lexicon) {
                 Lang().Lexicon[key] = <Lexc.Word> {
