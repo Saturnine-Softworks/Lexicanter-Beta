@@ -5,6 +5,7 @@
     import { blur } from 'svelte/transition';
     import Pronunciations from './Pronunciations.svelte';
     import Inflections from '../components/Inflections.svelte';
+    import { markdownToHtml } from '../utils/markdown';
     import { debug } from '../utils/diagnostics.js';
     const dispatch = createEventDispatcher();
     const edit = () => dispatch('edit')
@@ -83,7 +84,7 @@
                 })()}
             </p>
         {/if}
-        <p>{Sense.definition}</p>
+        <p>{@html markdownToHtml(Sense.definition)}</p>
         {#if $Language.ShowEtymology && !!entryAncestors && showEtymology}
             <hr />
             <p class="lex-body"><i>{entryAncestors}</i></p>

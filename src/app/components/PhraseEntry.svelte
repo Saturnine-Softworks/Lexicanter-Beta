@@ -2,6 +2,7 @@
     import { Language, selectedCategory } from '../stores';
     import { createEventDispatcher } from 'svelte';
     import Pronunciations from './Pronunciations.svelte';
+    import { markdownToHtml } from '../utils/markdown';
     const dispatch = createEventDispatcher();
     const edit = () => dispatch('edit')
     export let phrase = '';
@@ -17,7 +18,9 @@
         {/each}
     {/if}
     <p class="prelined">
-        {$Language.Phrasebook[$selectedCategory][phrase].description}
+        {@html markdownToHtml(
+            $Language.Phrasebook[$selectedCategory][phrase].description
+        )}
     </p>
     {#if !!Object.keys($Language.Phrasebook[$selectedCategory][phrase].variants).length}
         <p>⋲ ᴠᴀʀɪᴀɴᴛꜱ ⋺</p>
@@ -30,7 +33,9 @@
                         </p>
                         <Pronunciations pronunciations={$Language.Phrasebook[$selectedCategory][phrase].variants[variant].pronunciations} />
                         <p class="prelined" style='margin: 0 1rem 0.5rem 1rem'>
-                            {$Language.Phrasebook[$selectedCategory][phrase].variants[variant].description}
+                            {@html markdownToHtml(
+                                $Language.Phrasebook[$selectedCategory][phrase].variants[variant].description
+                            )}
                         </p>
                     </div>
                 {/each}

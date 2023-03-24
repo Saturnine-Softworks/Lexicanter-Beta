@@ -11,7 +11,7 @@
 	import File from './layouts/File.svelte';
 	import Settings from './layouts/Settings.svelte';
     import Changelog from './layouts/Changelog.svelte';
-    import { theme, autosave, Language } from './stores';
+    import { theme, autosave, selectedTab, Language } from './stores';
     import { saveFile } from './utils/files'
     import * as diagnostics from './utils/diagnostics'
     import Inflection from './layouts/Inflection.svelte';
@@ -23,7 +23,6 @@
 
     const tabs = [Lexicon, Etymology, Phrasebook, Inflection, Phonology, Documentation, File, Settings, Changelog]
     const tab_btns = ['Lexicon', 'Etymology', 'Phrasebook', 'Inflection', 'Phonology', 'Documentation', 'File', 'Settings', 'Changelog'];
-    $: selectedTab = 0;
 
     /**
      * This block listens for the 'app-close' event, which is sent by the main
@@ -54,30 +53,28 @@
 
 <body id="body" spellcheck="false">
     <div class='tab-container'>
+        <p class="window-control">
+            <button class="hover-highlight close" on:click={() => ipcRenderer.send('buttonclose')}>╳</button>
+            <button class="hover-highlight minimize" on:click={() => ipcRenderer.send('minimize')}>—</button>
+            <button class="hover-highlight maximize" on:click={() => ipcRenderer.send('maximize')}>⛶</button>
+        </p>
         <div class="button-container">
-            {#if platform !== 'darwin'}
-            <span style="float: left">
-                <button class="hover-highlight" style="background-color: transparent" on:click={() => ipcRenderer.send('buttonclose')}>╳</button>
-                <button class="hover-highlight" style="background-color: transparent" on:click={() => ipcRenderer.send('minimize')}>–</button>
-                <button class="hover-highlight" style="background-color: transparent" on:click={() => ipcRenderer.send('maximize')}>⛶</button>
-            </span>
-            {/if}
-            <p class="version-info"><i>β</i>{version}</p>
+            <p class="version-info">β{version}-{platform} —</p>
             {#each tab_btns as tab, i}
             <!-- REVIEW - Automate the inclusion/exclusion of advanced feature tabs -->
                 {#if (tab !== 'Etymology' && tab !== 'Inflection') 
                     || (tab === 'Etymology' && $Language.ShowEtymology)
                     || (tab === 'Inflection' && $Language.ShowInflection)
                 }
-                    <button class:selected={selectedTab === i} class='hover-highlight'
-                        on:click={() => selectedTab = i}
+                    <button class:selected={$selectedTab === i} class='hover-highlight'
+                        on:click={() => $selectedTab = i}
                     > {tab}
                     </button>
                 {/if}
             {/each}
         </div>
         {#each tabs as tab, i}
-            <div class:collapsed={selectedTab !== i}>
+            <div class:collapsed={$selectedTab !== i}>
                 <svelte:component this={tab}/>
             </div>
         {/each}

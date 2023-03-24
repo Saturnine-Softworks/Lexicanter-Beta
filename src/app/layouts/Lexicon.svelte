@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Language, wordInput, pronunciations } from '../stores';
+    const { ipcRenderer } = require('electron');
+    import { Language, wordInput, pronunciations, selectedTab } from '../stores';
     import type * as Lexc from '../types';
     import { alphabetize, alphabetPrecheck } from '../utils/alphabetize';
     import { get_pronunciation } from '../utils/phonetics';
@@ -9,8 +10,8 @@
     const vex = require('vex-js');
 
     let defInputs = [''];
-    let searchWords = ''; let searchDefinitions = ''; let searchTags = '';
-    let lectFilter = '';
+    let searchWords = ''; let searchDefinitions = ''; let searchTags = ''; let lectFilter = '';
+    $: searchWords, searchDefinitions, searchTags, lectFilter; // Update the search when these values change
     let keys: string[] = [];
 
     let filtered_lex: Lexc.Lexicon;
@@ -51,6 +52,22 @@
         senses;
         lectSet = Array.from(new Set(senses.map(sense => [...sense.lects]).flat()))
     }
+
+    function scrollIntoView(word: string) {
+        const entry = document.getElementById(word);
+        if (entry) {
+            if (!!$selectedTab) $selectedTab = 0;
+            searchDefinitions = ''; searchTags = ''; searchWords = ''; lectFilter = '';
+            entry.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            })
+        };
+    }
+    ipcRenderer.on('lexicon link', (_, word) => {
+        console.log('link:', word);
+        scrollIntoView(word);
+    });
 
     /**
      * This function is used to delete an entry from the lexicon and
@@ -152,6 +169,7 @@
             });
         } else {
             commitWord(word, append);
+            scrollIntoView(word);
         }
     }
 

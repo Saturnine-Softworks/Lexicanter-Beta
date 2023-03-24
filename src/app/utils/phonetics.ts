@@ -74,7 +74,7 @@ export function complete_word(trial) {
 
     const finalize = (word: string) => {
         word += '^';
-        if (!inventory.Illegals.some(v => word.includes(v))) {
+        if (!inventory.Illegals.some(v => word.includes(v)) || !inventory.Illegals[0]) {
             return word.replace(/\^/g, '');
         } else {
             return '';
@@ -157,7 +157,7 @@ export function generate_word() {
         }
     
         word += '^';
-        if (!inventory.Illegals.some(v => word.includes(v))) {
+        if (!inventory.Illegals.some(v => word.includes(v)) || !inventory.Illegals[0]) {
             return word.replace(/\^/g, '');
         } else {
             return '';

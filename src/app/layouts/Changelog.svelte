@@ -25,7 +25,7 @@
                 • New <i>Inflection</i> features, which include a new tab, which allows you to create inflectional paradigms for your language. <br>
                 • New <i>Etymology</i> features, which include a new tab, allows you to create etymologies trees and view them in the lexicon. <br>
                 • Check out the new docs page or tutorial video for more in-depth information! <br>
-                • New app icon by Lyiusa! <br>
+                • New app icons by Lyiusa! <br>
                 • New themes: Juniper by Saturnine, and Midnight and Bone by <a rel="noreferrer" target="_blank" href="https://linktr.ee/maarzcreative">Maarz</a>!
             <br><br>
             </p>
