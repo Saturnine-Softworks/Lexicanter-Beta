@@ -107,6 +107,19 @@ const createWindow = () => {
     ipcMain.handle('platform', () => {
         return process.platform;
     });
+    ipcMain.on('buttonclose', () => {
+        mainWindow.webContents.send('app-close');
+    });
+    ipcMain.on('minimize', () => {
+        mainWindow.minimize();
+    });
+    ipcMain.on('maximize', () => {
+        if (mainWindow.isMaximized()) {
+            mainWindow.unmaximize();
+        } else {
+            mainWindow.maximize();
+        }
+    });
 
     mainWindow.on('close', e => {
         mainWindow.webContents.send('app-close');

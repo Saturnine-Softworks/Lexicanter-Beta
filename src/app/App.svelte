@@ -55,9 +55,9 @@
 <body id="body" spellcheck="false">
     <div class='tab-container'>
         <div class="button-container">
-            {#if platform == 'darwin'}
+            {#if platform !== 'darwin'}
             <span style="float: left">
-                <button class="hover-highlight" style="background-color: transparent" on:click={() => ipcRenderer.send('close')}>╳</button>
+                <button class="hover-highlight" style="background-color: transparent" on:click={() => ipcRenderer.send('buttonclose')}>╳</button>
                 <button class="hover-highlight" style="background-color: transparent" on:click={() => ipcRenderer.send('minimize')}>–</button>
                 <button class="hover-highlight" style="background-color: transparent" on:click={() => ipcRenderer.send('maximize')}>⛶</button>
             </span>
