@@ -55,9 +55,8 @@
     }
 
     let entryAncestors: string = '';
-    $: {
-        $Language.Etymologies;
-        $Language.Lexicon; $Language.Relatives
+    $: { 
+        $Language.Etymologies; $Language.Lexicon; word; source;
         entryAncestors = getAncestors();
     }
 </script>

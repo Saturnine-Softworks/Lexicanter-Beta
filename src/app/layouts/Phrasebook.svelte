@@ -139,7 +139,9 @@
         let category = $categoryInput.trim();
         if (!category) return
         let pronunciations = {};
-        Object.keys($phrasePronunciations).forEach(lect => {
+        console.log($phrasePronunciations, lects);
+        Object.keys($phrasePronunciations).filter(lect => lects.includes(lect)).forEach(lect => {
+            console.log(lect)
             pronunciations[lect] = {
                 ipa: $phrasePronunciations[lect].trim(),
                 irregular: $phrasePronunciations[lect].trim() !== get_pronunciation(newPhrase, lect),

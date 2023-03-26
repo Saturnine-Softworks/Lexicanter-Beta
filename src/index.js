@@ -21,7 +21,7 @@ const createWindow = () => {
         autoHideMenuBar: true,
         titleBarStyle: 'hidden',
         titleBarOverlay: false,
-        show: false,
+        show: true,
         webPreferences: {
             devTools: isDev,
             nodeIntegration: true, // these two settings are required in order to use

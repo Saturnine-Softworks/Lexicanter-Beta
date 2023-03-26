@@ -3,6 +3,7 @@
     import * as diagnostics from "../utils/diagnostics";
     import { blur } from 'svelte/transition';
     import * as sca from "../utils/sca";
+    import type { OutputBlockData } from "@editorjs/editorjs";
     export let word: string;
     export let tags: string[];
     let show = false;
@@ -13,36 +14,41 @@
         return temp.textContent;
     }
 
-    let data = structuredClone($Language.Inflections)
-        .filter(inflection => {
-            let filter: RegExp;
-            try {
-                filter = new RegExp(inflection.filter);
-            } catch (e) {
-                diagnostics.debug.error(`Invalid regular expression: /${inflection.filter}/`);
-                filter = /.+/;
-            }
-            return (inflection.tags[0]? inflection.tags.some(tag => tags.includes(tag)) : true) && word.match(filter)
-        })
-        .map(inflection => inflection.tables.blocks);
+    let data: OutputBlockData[][];
 
-    data.forEach((blocks, i) => {
-        blocks.forEach((block, j) => {
-            if (block.type !== 'table') return;
-            block.data.content.forEach((row: string[], y: number) => {
-                row.forEach((cell: string, x: number) => {
-                    const settings = sca.parseRules(htmlToText(cell));
-                    /* console.log(
-                        'settings.rules:', settings.rules,
-                        '\nword:', word,
-                        '\nsca.applyRules(...):', sca.applyRules(settings.rules, word, settings.categories)
-                    ); */
-                    if (!settings.rules[0]) return
-                    data[i][j].data.content[y][x] = sca.applyRules(settings.rules, word, settings.categories);
+    $: {
+        word; tags; $Language.Inflections; $Language.Lexicon;
+        data = structuredClone($Language.Inflections)
+            .filter(inflection => {
+                let filter: RegExp;
+                try {
+                    filter = new RegExp(inflection.filter);
+                } catch (e) {
+                    diagnostics.debug.error(`Invalid regular expression: /${inflection.filter}/`);
+                    filter = /.+/;
+                }
+                return (inflection.tags[0]? inflection.tags.some(tag => tags.includes(tag)) : true) && word.match(filter)
+            })
+            .map(inflection => inflection.tables.blocks);
+
+        data.forEach((blocks, i) => {
+            blocks.forEach((block, j) => {
+                if (block.type !== 'table') return;
+                block.data.content.forEach((row: string[], y: number) => {
+                    row.forEach((cell: string, x: number) => {
+                        const settings = sca.parseRules(htmlToText(cell));
+                        /* console.log(
+                            'settings.rules:', settings.rules,
+                            '\nword:', word,
+                            '\nsca.applyRules(...):', sca.applyRules(settings.rules, word, settings.categories)
+                        ); */
+                        if (!settings.rules[0]) return
+                        data[i][j].data.content[y][x] = sca.applyRules(settings.rules, word, settings.categories);
+                    });
                 });
             });
         });
-    });
+    }
 </script>
 
 {#if data[0]}

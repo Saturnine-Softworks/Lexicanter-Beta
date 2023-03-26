@@ -28,9 +28,7 @@
         $Language.Alphabet; $Language.Pronunciations;
         keys;
         (() => {
-            alphabetized = [];
-             // REVIEW the timeout is to force the lexicon to clear before being repopulated
-            window.setTimeout(() => alphabetized = alphabetize(!!keys.length? filtered_lex : $Language.Lexicon), 1);
+            alphabetized = alphabetize(!!keys.length? filtered_lex : $Language.Lexicon)
         })();
     } 
 
@@ -164,12 +162,13 @@
                 callback: (value: boolean) => {
                     if (value) {
                         commitWord(word, append);
+                        window.setTimeout(() => scrollIntoView(word), 50);
                     };
                 }
             });
         } else {
             commitWord(word, append);
-            scrollIntoView(word);
+            window.setTimeout(() => scrollIntoView(word), 50);
         }
     }
 
