@@ -16,6 +16,48 @@
 
             <br><hr/><br>
 
+            <p><u>Patch 2.0.15</u></p>
+            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
+                • Fixed a reported bug with HTML export. <br>
+                • Related to the above fix, technical limitations now prevent your theme from being exported with your HTML. Solutions are being investigated.
+            <br><br>
+            <p><u>Patch 2.0.14</u></p>
+            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
+                • Fixed CSV export. <br>
+                • Fixed a reported bug with HTML export. <br>
+                • Fixed some reported and unreported issues with the sound change engine. <br>
+                • There is now a text input designated for specifying categories for sound changes in an inflection group, to make everyone's life easier.
+                • Minor optimizations and performance improvements.
+            <br><br>
+            </p>
+            <p><u>Patch 2.0.13</u></p>
+            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
+                • Linux support!
+            <br><br>
+            </p>
+            <p><u>Patch 2.0.12</u></p>
+            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
+                • Fixed a reported bug which caused HTML export to fail. Expect expanded HTML export options in the future. <br>
+                • Minor optimizations. 
+            <br><br>
+            </p>
+            <p><u>Patch 2.0.11</u></p>
+            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
+                • Fixed a reported bug which caused a semi-rare soft-crash in certain cases when dealing with multiple lects. Again.
+            <br><br>
+            </p>
+            <p><u>Patch 2.0.10</u></p>
+            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
+                • Fixed a reported bug which caused a semi-rare soft-crash in certain cases when dealing with multiple lects. <br>
+                • Fixed a reported bug which caused CSV import to fail, and improved CSV import options. 
+            <br><br>
+            </p>
+            <p><u>Patch 2.0.9</u></p>
+            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
+                • You can now write multple rules separated by a semicolon, which allows for multiple rules per table cell in the inflection tables. <br>
+                • Fixed a reported bug which caused a soft crash when attempting to edit the last word in the lexicon if it had an inflections dropdown open.
+            <br><br>
+            </p>
             <p><u>New in 2.0</u></p>
             <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
                 • There is now a new sound change engine under the hood. Your old rules may no longer work; for assistance, you can contact the developer. <br>
@@ -24,7 +66,8 @@
                 • New <i>Lect</i> features allow you to denote the ways your language may vary, particularly in semantics and pronunciation. <br>
                 • New <i>Inflection</i> features, which include a new tab, which allows you to create inflectional paradigms for your language. <br>
                 • New <i>Etymology</i> features, which include a new tab, allows you to create etymologies trees and view them in the lexicon. <br>
-                • Check out the new docs page or tutorial video for more in-depth information! <br>
+                • Check out the new <a rel="noreferrer" target="_blank" href="https://github.com/Saturnine-Softworks/Lexicanter/wiki">wiki page</a> 
+                or <a rel="noreferrer" target="_blank" href="https://www.youtube.com/watch?v=6_AwCC4XlvU&t=151s">tutorial video</a> for more in-depth information! <br>
                 • New app icons by Lyiusa! <br>
                 • New themes: Juniper by Saturnine, and Midnight and Bone by <a rel="noreferrer" target="_blank" href="https://linktr.ee/maarzcreative">Maarz</a>!
             <br><br>

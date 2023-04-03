@@ -6,10 +6,12 @@ const vex = require('vex-js');
 import { get } from 'svelte/store';
 import type { OutputData } from '@editorjs/editorjs';
 import type * as Lexc from '../types';
-import { Language, autosave, docsEditor, theme } from '../stores';
+import { Language, autosave, docsEditor } from '../stores';
 import { writeRomans, get_pronunciation } from './phonetics';
 import { initializeDocs } from './docs';
 import * as diagnostics from './diagnostics';
+import { alphabetize } from './alphabetize';
+import { markdownToHtml } from './markdown';
 
 const Lang = () => get(Language);
 
@@ -212,9 +214,13 @@ export const saveAs = {
                 .join(',') // comma-separated
             ).join('\r\n'); // rows starting on new lines
         };
-        const arr_data = [['Word', 'Pronunciation', 'Definition']];
+        const arr_data = [['Word', 'Pronunciations', 'Definitions']];
         for (const key in $lexicon) {
-            arr_data.push([key, $lexicon[key][0], $lexicon[key][1]]);
+            arr_data.push([
+                key, 
+                Object.entries($lexicon[key].pronunciations).map(([lect, {ipa}]) => lect + ': ' + ipa).join(' — '), 
+                $lexicon[key].Senses.map(sense => sense.definition).join(' — ')
+            ]);
         }
         const export_data = array_to_csv(arr_data);
         const exports = new Blob([export_data]);
@@ -251,6 +257,74 @@ export const saveAs = {
         window.alert('The file exported successfully.');
     },
     html: {
+        lexicon: async () => {
+            // Create HTML document object
+            const export_container = document.createElement('html');
+    
+            // Create HTML header info
+            const head = document.createElement('head');
+            head.innerHTML = `
+                <meta charset="UTF-8" />
+                <title>${Lang().Name}</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                <link href="https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+            `;
+
+            // Create export styles
+            const styles = document.createElement('style');
+            styles.innerHTML = indexCSS;
+            
+            const overrides = document.createElement('style');
+            overrides.innerHTML = overridesCSS;
+    
+            // Create export body
+            const body = document.createElement('body');
+            body.innerHTML += `<h1>${Lang().Name}</h1>`;
+            const alphabetical = alphabetize(Lang().Lexicon);
+            body.innerHTML += '<hr/><h2>Lexicon</h2>';
+            alphabetical.forEach(entry => {
+                let text = '';
+                const pronunciations = Lang().Lexicon[entry].pronunciations;
+                Object.entries(pronunciations).forEach(([lect, pronunciation]) => {
+                    text += `<p class="lect">${lect}: <span class='pronunciation'>${pronunciation.ipa}</span></p>`;
+                });
+                const senses = Lang().Lexicon[entry].Senses;
+                senses.forEach(({lects, definition, tags}, i) => {
+                    text += `<p class="lect">${lects.join(', ')}</p>`;
+                    text += `<div class='sense'>${i+1}.</div>`;
+                    tags.forEach(tag => {
+                        text += `<div class='tag-item'>${tag}</div>`;
+                    });
+                    text += `<p>${markdownToHtml(definition)}</p>`;
+                });
+                body.innerHTML += `<div class="lex-entry"><p>${entry}</p>${text}</div>`;
+            });
+    
+            head.append(styles, overrides);
+            export_container.append(head, body);
+    
+            const export_data = export_container.outerHTML;
+            const exports = new Blob(['\ufeff', export_data], {
+                type: 'tex/html; charset=utf-8;',
+            });
+    
+            const file_handle = await window.showSaveFilePicker({
+                suggestedName: `${Lang().Name}_Lexicon.html`,
+            });
+            await file_handle.requestPermission({ mode: 'readwrite' });
+            const file = await file_handle.createWritable();
+            try {
+                await file.write(exports);
+            } catch (err) {
+                vex.dialog.alert('The file failed to export. Please contact the developer for assistance.');
+                console.log(err);
+                await file.close();
+                return;
+            }
+            await file.close();
+            vex.dialog.alert('The file exported successfully.');
+        },
         all: async () => {
             // Create HTML document object
             const export_container = document.createElement('html');
@@ -264,392 +338,15 @@ export const saveAs = {
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                 <link href="https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
             `;
-            // Create export scripts
-            const scripts = document.createElement('script');
-            scripts.innerHTML = `
-                const lex_body = document.getElementById('lex-body');
-                const entry_count = document.getElementById('entry-counter');
-                const srch_wrd = document.getElementById('search-wrd');
-                const srch_def = document.getElementById('search-def');
-                const srch_tag = document.getElementById('search-tag');
-                const srch_phrase = document.getElementById('search-phrase');
-                const srch_descriptions = document.getElementById('search-description');
-                const cat_body = document.getElementById('category-body');
-                const book_body = document.getElementById('phrasebook-body');
-                const variant_body = document.getElementById('variants-body');
-                const lexicon = ${JSON.stringify(Lang().Lexicon)};
-                const phrasebook = ${JSON.stringify(Lang().Phrasebook)};
-                let selected_cat;
-    
-                function sort_lex_keys() {
-                    let htags = ${JSON.stringify(
-        Lang().HeaderTags.toLowerCase().trim().split(/\\s+/)
-    )};
-                    let all_words = structuredClone(lexicon)
-                    let tag_ordered_lexes = []
-                    for (let tag of htags) {
-                        tag_ordered_lexes.push([])
-                        for (let word in all_words) {
-                            if (lexicon[word][3].includes(tag)) {
-                                tag_ordered_lexes[tag_ordered_lexes.length-1].push(word)
-                            }
-                        }
-                        // console.log(tag_ordered_lexes, tag_ordered_lexes[tag_ordered_lexes.length-1])
-                        for (let w of tag_ordered_lexes[tag_ordered_lexes.length-1]) {
-                            delete all_words[w];
-                        }
-                    }
-                    let remaining_words = []
-                    for (let w in all_words) {remaining_words.push(w)}
-                    tag_ordered_lexes.push(remaining_words)
-                
-                    // Lowercase alphabet if case-sensitivity is unticked
-                    var alphabet = ${
-    Lang().CaseSensitive
-        ? JSON.stringify(Lang().Alphabet.trim()) 
-        : JSON.stringify(Lang().Alphabet.trim().toLowerCase())
-};
-                    let order = alphabet.trim().split(/\\s+/);
-                    // to make sure we find the largest tokens first, i.e. for cases where 'st' comes before 'str' alphabetically
-                    find_in_order = Array.from(new Set(order)).sort((a, b) => b.length - a.length); // descending, ensures uniqueness
-                
-                    let final_sort = [];
-                    for (let group of tag_ordered_lexes) {
-                        let lex = {};
-                        let list = [];
-                        for (let word of group) {
-                            // case sensitivity
-                            let w = ${ Lang().CaseSensitive? 'word' : 'word.toLowerCase()' };
-                
-                            // diacritic sensitivity
-                            w = ${ Lang().IgnoreDiacritics? 'w.normalize("NFD").replace(/\\p{Diacritic}/gu, "")' : 'w' };
-                
-                            for (let token of find_in_order) {
-                                w = w.replace(new RegExp(\`\${token}\`, 'g'), \`\${order.indexOf(token)}.\`)
-                            }
-                            append = w.split('.');
-                            for (let i of append) { append[append.indexOf(i)] = +i || 0 }
-                            lex[word] = append;
-                            list.push(append);
-                        }
-                        list.sort( (a, b) => {
-                            for (let i of a) {
-                                let j = b[a.indexOf(i)];
-                                if (i === j) { continue };
-                                return i - j;
-                            }
-                            return 0;
-                        });
-                        let sorted = [];
-                        for (let key in lex) { sorted.push([key, list.indexOf(lex[key])]) } // [ [word, index], [word, index], ...]
-                        sorted.sort((a, b) => a[1] - b[1]);
-                        for (let i = 0; i < sorted.length; i++) {
-                            sorted[i] = sorted[i][0];
-                        }
-                        for (let i of sorted) {
-                            final_sort.push(i)
-                        }
-                    }
-                    return final_sort;
-                }
-                function rewrite_entries(keys = false) {
-                    let sorted_keys = sort_lex_keys();
-                    lex_body.replaceChildren();
-                
-                    if (sorted_keys.length !== 0) {
-                        for (let key of sorted_keys) {
-                            if ( !keys || keys.includes(key) ) {
-                                let entry = document.createElement('div');
-                                entry.className = 'lex-entry';
-                                entry.id = key;
-                                
-                                let word = document.createElement('p');
-                                word.appendChild( document.createTextNode(key) );
-                                word.style.fontStyle = 'italic';
-                                
-                                let pron = document.createElement('p');
-                                pron.className = 'pronunciation';
-                                pron.appendChild( document.createTextNode(lexicon[key][0]) );
-                                
-                                let defn = document.createTextNode(lexicon[key][1]);
-                                
-                                let tags = document.createElement('div');
-                                for (let tag of lexicon[key][3]) {
-                                    let newTag = document.createElement('div');
-                                    newTag.appendChild( document.createTextNode(tag) );
-                                    newTag.className = 'tag-item';
-                                    tags.appendChild(newTag);
-                                }
-                                
-                                entry.append(word, pron, tags, defn);
-                
-                                lex_body.appendChild(entry);
-                            }
-                        }
-                    }
-                    if (!keys) {
-                        var count = document.createTextNode(\`\${Object.keys(lexicon).length} Entries\`);
-                    } else {
-                        var count = document.createTextNode(\`\${keys.length} Matches\`);
-                    }
-                    entry_count.replaceChildren(count)
-                }
-                function search_lex() {
-                    let s = srch_wrd.value.trim();
-                    let z = srch_def.value.toLowerCase().trim();
-                    let x = srch_tag.value.trim();
-                    if (s === 'Search by word…'){s = ''};
-                    if (z === 'search definition…'){z = ''};
-                    if (x === 'Search by tags…' || x === ''){ x = [] } else { x = x.split(/\\s+/g) }
-                    let keys = false;
-                    if (s !== '' || z !== '' || x.length !== 0 ) {
-                        let l = [s + '|', z + '|'];
-                        // Turn l into a list of [search by word terms, search by def terms]
-                        for (let e of l) {
-                            let n = l.indexOf(e);
-                            l[n] = [];
-                            e = e.split('|');
-                            for (let a of e) { l[n].push( a.trim() ); }
-                        }
-                        keys = [];
-                        for (let word in lexicon) {
-                            let w = \`^\${word}^\`;
-                            let match = true;
-                            for (let a of l[0]) { // words
-                                if ( !w.includes(a) ) { match = false; }
-                            }
-                            for (let a of l[1]) { // definitions
-                                if ( !lexicon[word][1].toLowerCase().includes(a) ) { match = false; }
-                            }
-                            if (lexicon[word][3].length !== 0) {
-                                let any_tag_match;
-                                for (let tag of lexicon[word][3]) {
-                                    for (let a of x) { // tags
-                                        if (\`^\${tag}^\`.includes(a)) { any_tag_match = true; }
-                                    }
-                                }
-                                if (!any_tag_match) { match = false; }
-                            } else {
-                                if (x.length !== 0) { match = false; }
-                            }
-                            if (match) { keys.push(word); }
-                        }
-                    }
-                    rewrite_entries(keys);
-                }
-                srch_wrd.onkeyup = search_lex; 
-                srch_def.onkeyup = search_lex;
-                srch_tag.onkeyup = search_lex;
-                srch_wrd.onfocus = function() {
-                    if (srch_wrd.value === 'Search by word…') {
-                        srch_wrd.style.color = 'white';
-                        srch_wrd.value = '';
-                    }
-                }
-                srch_wrd.onblur = function() {
-                    if (srch_wrd.value === '') {
-                        srch_wrd.value = 'Search by word…';
-                    }
-                }
-                srch_def.onfocus = function() {
-                    if (srch_def.value === 'Search definition…') {
-                        srch_def.style.color = 'white';
-                        srch_def.value = '';
-                    }
-                }
-                srch_def.onblur = function() {
-                    if (srch_def.value === '') {
-                        srch_def.value = 'Search definition…';
-                    }
-                }
-                srch_tag.onfocus = function() {
-                    if (srch_tag.value === 'Search by tags…') {
-                        srch_tag.style.color = 'white';
-                        srch_tag.value = '';
-                    }
-                }
-                srch_tag.onblur = function() {
-                    if (srch_tag.value === '') {
-                        srch_tag.value = 'Search by tags…';
-                    }
-                }
-                srch_wrd.onblur(); srch_def.onblur(); srch_tag.onblur();
-                
-                function update_book(keys=false) {
-                    if (!keys) { keys = [false] }
-                    if (selected_cat) { // make sure category isn't blank
-                        while (book_body.firstChild) {
-                            book_body.removeChild(book_body.lastChild)
-                        }
-                        let title = document.createElement("p");
-                        title.classList = 'table-title capitalize';
-                        title.appendChild( document.createTextNode( selected_cat.toLowerCase()) );
-                        book_body.append(title, /* document.createElement('hr') */ );
-                
-                        for (let entry in phrasebook[selected_cat]) {
-                            if (keys.indexOf(entry) !== -1 || keys[0] === false) {
-                                // base entry
-                                let entry_container = document.createElement('div');
-                                entry_container.className = 'lex-entry';
-                                let phrase = document.createElement('p');
-                                phrase.appendChild( document.createTextNode(entry) );
-                                phrase.style.fontStyle = 'italic';
-                                let pron = document.createElement('p');
-                                pron.className = 'pronunciation';
-                                pron.appendChild( document.createTextNode(phrasebook[selected_cat][entry].pronunciation) );
-                                let desc = document.createElement('p');
-                                desc.className = 'prelined';
-                                desc.appendChild( document.createTextNode(phrasebook[selected_cat][entry].description) );
-                                entry_container.append(phrase, pron, desc);
-                                // variant entries
-                
-                                if ( Object.keys(phrasebook[selected_cat][entry].variants).length > 0) {
-                                    let t = document.createElement('p');
-                                    t.appendChild( document.createTextNode('⋲ ᴠᴀʀɪᴀɴᴛꜱ ⋺') );
-                                    entry_container.append(t);
-                
-                                    var it = 0;
-                                    var crow = document.createElement('div');
-                                    crow.classList = 'row variants';
-                                    entry_container.appendChild(crow);
-                                    for (variant in phrasebook[selected_cat][entry].variants) {
-                                        it++;
-                                        if (it === 4) {
-                                            it = 0;
-                                            entry_container.appendChild(crow);
-                                            var crow = document.createElement('div');
-                                            crow.classList = 'row variants';
-                                            entry_container.appendChild(crow);
-                                        }
-                                        let vcol = document.createElement('div');
-                                        vcol.className = 'column';
-                
-                                        let v_phrase = document.createElement('p');
-                                        v_phrase.appendChild( document.createTextNode(variant) );
-                                        v_phrase.style.fontStyle = 'italic';
-                                        let v_pron = document.createElement('p');
-                                        v_pron.className = 'pronunciation';
-                                        v_pron.appendChild( document.createTextNode(phrasebook[selected_cat][entry].variants[variant].pronunciation) );
-                                        let v_desc = document.createElement('p');
-                                        v_desc.className = 'prelined';
-                                        v_desc.appendChild( document.createTextNode(phrasebook[selected_cat][entry].variants[variant].description) );
-                        
-                                        vcol.append(v_phrase, v_pron, v_desc);
-                                        crow.appendChild(vcol);                    
-                                    }
-                                }
-                
-                                entry_container.addEventListener('click', () => edit_book_entry(entry)); // edit functionality
-                                book_body.appendChild(entry_container);
-                            }
-                        }
-                    } else { book_body.replaceChildren(); }
-                }
-                
-                function update_categories() {
-                    while (cat_body.firstChild) {
-                        cat_body.removeChild(cat_body.lastChild);
-                    }
-                    for (let cat in phrasebook) {
-                        let i = document.createElement("div");
-                        i.appendChild( document.createTextNode(cat) );
-                        i.className = 'lex-entry capitalize';
-                        i.onclick = function () { 
-                            selected_cat = cat; 
-                            update_book();
-                        };
-                        cat_body.appendChild(i);
-                    };
-                    update_book();
-                }
-                
-                srch_phrase.onfocus = function() {
-                    if (srch_phrase.value === 'Search by phrase…') {
-                        srch_phrase.style.color = 'white';
-                        srch_phrase.value = '';
-                    }
-                }
-                srch_phrase.onblur = function() {
-                    if (srch_phrase.value === '') {
-                        srch_phrase.value = 'Search by phrase…';
-                    }
-                }
-                srch_descriptions.onfocus = function() {
-                    if (srch_descriptions.value === 'Search descriptions…') {
-                        srch_descriptions.style.color = 'white';
-                        srch_descriptions.value = '';
-                    }
-                }
-                srch_descriptions.onblur = function() {
-                    if (srch_descriptions.value === '') {
-                        srch_descriptions.value = 'Search descriptions…';
-                    }
-                }
-                srch_phrase.onblur(); srch_descriptions.onblur();
-                
-                function search_book() {
-                    let scope = phrasebook[selected_cat];
-                    let ps = srch_phrase.value.trim();
-                    let ds = srch_descriptions.value.toLowerCase().trim();
-                    if (ps === 'Search by phrase…') {ps = ''};
-                    if (ds === 'search descriptions…') {ds = ''};
-                    let keys = false;
-                    if (ps !== '' || ds !== '') {
-                        keys = [];
-                        for (let entry in scope) {
-                            let term = '^' + entry + '^';
-                            let pm = !ps.length;
-                            let dm = !ds.length;
-                            // console.log(scope[entry].description, scope[entry].description.includes(ds));
-                            if (term.includes(ps)) {
-                                pm = true;
-                            }
-                            if ( scope[entry].description.toLowerCase().includes(ds) ) {
-                                dm = true;
-                            } 
-                            for (let variant in scope[entry].variants) {
-                                let v_term = '^' + variant + '^';
-                                if (v_term.includes(ps)) {
-                                    pm = true;
-                                }
-                                if (scope[entry].variants[variant].description.toLowerCase().includes(ds)) {
-                                    dm = true;
-                                }
-                            }
-                            console.log(pm, dm, ps, ds, entry);
-                            if (pm && dm) {
-                                keys.push(entry);
-                            }
-                        }
-                    }
-                    update_book(keys);
-                }
-                srch_phrase.onkeyup = search_book;
-                srch_descriptions.onkeyup = search_book;
-    
-                update_book();
-                update_categories();
-                rewrite_entries();
-            `;
+            
             // Create export styles
             const styles = document.createElement('style');
-            styles.innerHTML = fs.readFileSync(
-                path.join(path.dirname(__dirname), 'styles/index.css'),
-                'utf8'
-            );
-            const themeElement = document.createElement('style');
-            themeElement.innerHTML = fs.readFileSync(
-                path.join(path.dirname(__dirname), get(theme)),
-                'utf8'
-            );
+            styles.innerHTML = indexCSS;
+
             const overrides = document.createElement('style');
-            overrides.innerHTML = fs.readFileSync(
-                path.join(path.dirname(__dirname), 'styles/html_export.css'),
-                'utf8'
-            );
+            overrides.innerHTML = overridesCSS;
     
             let documentation: HTMLElement = document.createElement('div');
-            documentation.classList.add('container', 'column', 'scrolled');
             // Convert EditorJS save data to HTML.
             await get(docsEditor).save().then(data => {
                 documentation = editorjsToHTML(data, documentation);
@@ -657,65 +354,30 @@ export const saveAs = {
     
             // Create export body
             const body = document.createElement('body');
-            body.innerHTML = `
-                <h1>${Lang().Name}</h1>
-                <div class='tab-pane text-center'>
-                    <div class="row" style="max-height: 90vh">
-                        <div class='container column'>
-                            <div class='search-row'>
-                                <div class="column">
-                                    <label for="search-wrd" style="display: none">Search by word</label>
-                                    <input id="search-wrd" type="text" class="search" />
-                                </div>
-                                <div class="column">
-                                    <label for="search-tag" style="display: none">Search by tags</label>
-                                    <input id="search-tag" type="text" class="search" />
-                                </div>
-                            </div>
-                            <label for="search-def" style="display: none">Search definitions</label>
-                            <input id="search-def" type="text" class="search">
-                            <div class='scrolled' style="height: 64vh">
-                                <p class="prelined lex-body" id="lex-body">The lexicon should appear here.</p>
-                            </div>
-                            <p id="entry-counter"></p>
-                        </div>
-                        ${documentation.outerHTML}
-                    </div>
+            body.innerHTML += `<h1>${Lang().Name}</h1>`;
+            body.innerHTML += documentation.outerHTML;
+            const alphabetical = alphabetize(Lang().Lexicon);
+            body.innerHTML += '<hr/><h2>Lexicon</h2>';
+            alphabetical.forEach(entry => {
+                let text = '';
+                const pronunciations = Lang().Lexicon[entry].pronunciations;
+                Object.entries(pronunciations).forEach(([lect, pronunciation]) => {
+                    text += `<p class="lect">${lect}: <span class='pronunciation'>${pronunciation.ipa}</span></p>`;
+                });
+                const senses = Lang().Lexicon[entry].Senses;
+                senses.forEach(({lects, definition, tags}, i) => {
+                    text += `<p class="lect">${lects.join(', ')}</p>`;
+                    text += `<div class='sense'>${i+1}.</div>`;
+                    tags.forEach(tag => {
+                        text += `<div class='tag-item'>${tag}</div>`;
+                    });
+                    text += `<p>${markdownToHtml(definition)}</p>`;
+                });
+                body.innerHTML += `<div class="lex-entry"><p>${entry}</p>${text}</div>`;
+            });
     
-                    <!-- Phrasebook -->
-                    <div class="row" style="height:90vh;">
-                        <!-- Categories -->
-                        <div class="container column sidebar">
-                            <p>Categories</p>
-                            <hr />
-                            <div class="column scrolled" style="max-height: 90%;" id="category-body">
-                                <p class="info">Phrasebook categories appear here.</p>
-                            </div>
-                        </div>
-                        <div class="container column">
-                            <!-- Search Fields -->
-                            <div class="search-row">
-                                <div class="column">
-                                    <label for="search-phrase" style="display: none">Search by phrase…</label>
-                                    <input id="search-phrase" type="text" class="search" />
-                                </div>
-                                <div class="column">
-                                    <label for="search-description" style="display: none">Search descriptions…</label>
-                                    <input id="search-description" type="text" class="search" />
-                                </div>
-                            </div>
-                            <!-- Book -->
-                            <div class="column scrolled" id="phrasebook-body" style="max-height: 80%;">
-                                <p class="info">Select a category from the left.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <br><br>
-            `;
-    
-            head.append(styles, themeElement, overrides);
-            export_container.append(head, body, scripts);
+            head.append(styles, overrides);
+            export_container.append(head, body);
     
             const export_data = export_container.outerHTML;
             const exports = new Blob(['\ufeff', export_data], {
@@ -728,16 +390,15 @@ export const saveAs = {
             await file_handle.requestPermission({ mode: 'readwrite' });
             const file = await file_handle.createWritable();
             try {
-                console.log(typeof exports);
                 await file.write(exports);
             } catch (err) {
-                window.alert('The file failed to export. Please contact the developer for assistance.');
+                vex.dialog.alert('The file failed to export. Please contact the developer for assistance.');
                 console.log(err);
                 await file.close();
                 return;
             }
             await file.close();
-            window.alert('The file exported successfully.');
+            vex.dialog.alert('The file exported successfully.');
         },
         docs: async () => {
             // Create HTML document object
@@ -754,21 +415,11 @@ export const saveAs = {
             `;
             // Create export styles
             const styles = document.createElement('style');
-            styles.innerHTML = fs.readFileSync(
-                path.join(path.dirname(__dirname), 'styles/index.css'),
-                'utf8'
-            );
-            const themeElement = document.createElement('style');
-            themeElement.innerHTML = fs.readFileSync(
-                path.join(path.dirname(__dirname), get(theme)),
-                'utf8'
-            );
+            styles.innerHTML = indexCSS;
+            
             const overrides = document.createElement('style');
-            overrides.innerHTML = fs.readFileSync(
-                path.join(path.dirname(__dirname), 'styles/html_export.css'),
-                'utf8'
-            );
-            head.append(styles, themeElement, overrides);
+            overrides.innerHTML = overridesCSS;
+            head.append(styles, overrides);
             export_container.appendChild(head);
     
             let body: HTMLElement = document.createElement('body');
@@ -791,13 +442,13 @@ export const saveAs = {
             try {
                 await file.write(exports);
             } catch (err) {
-                window.alert('The file failed to export. Please contact the developer.');
+                vex.dialog.alert('The file failed to export. Please contact the developer.');
                 console.log(err);
                 await file.close();
                 return;
             }
             await file.close();
-            window.alert('The file exported successfully.');
+            vex.dialog.alert('The file exported successfully.');
         },
     },
 };
@@ -940,43 +591,829 @@ export const openLegacy = {
     },
 };
 
+const csv = require('csv-parser');
 /**
  * Imports a CSV file to the lexicon.
  * @param {boolean} headers Whether or not the CSV file has headers.
  * @param {number} words The column number of the words.
  * @param {number} definitions The column number of the definitions.
  */
-export async function importCSV(headers: boolean, words: number, definitions: number) {
-    const [file_handle] = await window.showOpenFilePicker();
-    await file_handle.requestPermission({ mode: 'read' });
-    const file = await file_handle.getFile();
-    if (!file.name.includes('.csv')) {
-        window.alert('The selected file was not a .csv file.');
-        return;
-    }
-    const r = headers;
-    const w = words - 1;
-    const d = definitions - 1;
+export async function importCSV(headers: boolean, words: number, definitions: number, pronunciations: number|false, tags: number|false) {
+    const data = [];
+    let file_path: string;
+    words -= 1;
+    definitions -= 1;
+    if (pronunciations) pronunciations -= 1;
+    if (tags) tags -= 1;
+    showOpenDialog(
+        {
+            title: 'Open CSV File',
+            properties: ['openFile'],
+        },
+        path => {
+            if (path === undefined) return;
+            if (path[0].split('.').pop() !== 'csv') {
+                vex.dialog.alert('A CSV file was not selected.');
+                return;
+            }
+            file_path = path;
+            fs.createReadStream(path[0])
+                .pipe(csv({
+                    headers: false,
+                    skipLines: headers? 1 : 0,
+                }))
+                .on('data', (row) => {
+                    data.push(row);
+                })
+                .on('end', () => {
+                    console.log(data);
+                    const lexicon: Lexc.Lexicon = { };
+                    data.forEach(row => {
+                        lexicon[row[words]] = <Lexc.Word> {
+                            pronunciations: <Lexc.EntryPronunciations> {
+                                General: {
+                                    ipa: pronunciations? row[pronunciations] : get_pronunciation(row[words], Lang().Lects[0]),
+                                    irregular: false,
+                                }
+                            },
+                            Senses: <Lexc.Sense[]> [{
+                                definition: row[definitions],
+                                lects: [Lang().Lects[0]],
+                                tags: tags? row[tags].split(/\s+/).map((tag: string) => tag.trim()) : [],
+                            }]
+                        };
+                    });
+                    console.log(lexicon);
+                    get(Language).Lexicon = lexicon;
+                    get(Language).Name = file_path[0].split('/')[file_path[0].split('/').length - 1].split('.')[0];
 
-    const data = await file.text();
-    const rows = data.split('\r');
-    const $lexicon = {};
-    for (const row of rows) {
-        if (r && row === rows[0]) continue;
-
-        const columns = row.split(',');
-        if (columns[0].includes('\n"')) {
-            columns[0] = columns[0].split('\n"')[1];
+                    ipcRenderer.emit('update-lexicon-for-gods-sake-please');
+                });
         }
-        columns[columns.length - 1] = columns[columns.length - 1].replace(/"$/g, '');
-
-        $lexicon[columns[w]] = [
-            get_pronunciation(columns[w], Lang().Lects[0]),
-            columns[d],
-            false,
-            [],
-        ];
-    }
-    Lang().Lexicon = $lexicon;
-    Lang().Name = file.name.split('.')[0];
+    );
 }
+
+const overridesCSS = `
+@import url("https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:ital,wght@0,4000,7001,4001,700&display=swap");
+body {
+  overflow-y: auto;
+  text-align: center;
+  margin: auto;
+}
+
+.container {
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+.lex-body {
+  font-family: "Gentium Book Plus", serif;
+}
+
+.tag-item {
+  font-family: serif;
+}
+
+.search {
+  font-family: "Gentium Book Plus", serif;
+}
+
+.phonology, .pronunciation {
+  font-family: "Gentium Book Plus", serif !important;
+}
+
+[id=entry-counter] {
+  font-family: serif;
+}
+
+td {
+  text-align: center;
+  border: 2px solid black;
+}
+
+tr {
+  background-color: transparent !important;
+}
+
+table {
+  border-collapse: collapse;
+  margin: auto;
+}
+
+.table-container, .table-title {
+  font-family: "Gentium Book Plus", serif;
+  align-items: center;
+}
+
+button {
+  display: none;
+}
+
+.info {
+  display: none;
+}
+
+.search-row {
+  display: inline-flex;
+}
+
+@media only screen and (min-device-width: 601px) {
+  .sidebar {
+    max-width: 18% !important;
+  }
+}
+@media only screen and (max-device-width: 600px) {
+  body {
+    width: 100vw !important;
+    font-size: 12pt;
+    padding: 2vw;
+  }
+  body > h1 {
+    font-size: 36pt;
+  }
+  div.container {
+    height: 60vh !important;
+  }
+  div.column {
+    display: block;
+  }
+  div.sidebar {
+    max-height: 18vh;
+  }
+  div.row {
+    display: block;
+    min-width: 96vw !important;
+    margin-bottom: 36vh;
+  }
+  div.variants {
+    margin-bottom: 4rem;
+  }
+  .lex-entry, .lex-body {
+    font-size: 16pt !important;
+  }
+  .capitalize {
+    font-size: 24pt !important;
+  }
+  .tag-item, [id=entry-counter] {
+    font-size: 16pt;
+  }
+  .search, .sidebar p {
+    font-size: 24pt;
+  }
+  td {
+    font-size: 18pt !important;
+  }
+}
+
+/*# sourceMappingURL=html_export.css.map */
+`;
+
+const indexCSS = `
+@charset "UTF-8";
+html, body {
+  align-items: center;
+}
+
+body {
+  font-family: serif;
+  font-size: 11pt;
+  min-width: 600px;
+  min-height: 600px;
+  margin: 0px;
+  overflow: hidden;
+  -webkit-app-region: drag;
+}
+
+button {
+  font-family: serif;
+  font-size: 11pt;
+  transition-duration: 0.33s;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  -webkit-user-select: none;
+}
+button[id=overwrite] {
+  font-weight: bold;
+}
+button.collapser {
+  max-width: 1em;
+  height: 100%;
+  border-color: transparent !important;
+  background-color: rgba(17, 17, 17, 0.0666666667);
+  display: flex;
+  float: right;
+  margin: 0px;
+  padding: 0px;
+}
+button.collapser:hover {
+  border-color: rgba(255, 255, 255, 0.2666666667) !important;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+button.collapser::after {
+  content: "‖";
+  margin: auto;
+}
+button.collapser-h {
+  max-height: 1.33em;
+  width: 100% !important;
+  border-color: transparent !important;
+  background-color: rgba(17, 17, 17, 0.0666666667);
+  display: flex;
+  margin: 0px;
+  padding: 0px;
+}
+button.collapser-h:hover {
+  border-color: rgba(255, 255, 255, 0.2666666667) !important;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+button.collapser-h::after {
+  content: "═";
+  margin: auto;
+}
+
+.tab-container {
+  width: 100vw;
+  height: 100vh;
+  -webkit-user-select: none;
+}
+.tab-container .button-container {
+  width: 100%;
+  text-align: center;
+}
+.tab-container .button-container button {
+  border: none;
+  outline: none;
+  padding: 4px;
+  height: 100%;
+  width: fit-content;
+}
+.tab-container .window-control {
+  text-align: left;
+  height: 0px;
+  overflow: visible;
+}
+.tab-container .window-control button {
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+.tab-container .window-control button.close:hover {
+  background-color: #9e0f0f;
+}
+.tab-container .window-control button.minimize:hover {
+  background-color: #c9c911;
+}
+.tab-container .window-control button.maximize:hover {
+  background-color: #4eb94e;
+}
+.tab-container .tab-pane {
+  height: 80%;
+  box-sizing: border-box;
+  -webkit-app-region: no-drag;
+  -webkit-user-select: text;
+}
+
+.row {
+  display: flex;
+  margin: auto;
+}
+.row:has(~ .collapsible-row .collapsed) {
+  height: 90vh !important;
+}
+
+.column {
+  width: 100%;
+}
+
+.collapsible-column {
+  min-width: 2%;
+  width: fit-content;
+}
+
+.collapsible-row:has(.collapsed) {
+  height: 3vh !important;
+}
+
+.collapsed {
+  display: none;
+}
+
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+
+.prelined {
+  white-space: pre-line;
+  /* This is solely to make the \n character work from the JS side */
+}
+
+p {
+  margin: 0px;
+}
+
+div[id=tables-pane] {
+  font-family: Gentium;
+  font-size: 11pt;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-style: italic;
+  padding-top: 1em !important;
+}
+
+.info {
+  font-family: serif;
+  font-size: 11pt;
+  font-style: italic;
+  line-height: 1.5em;
+  -webkit-user-select: none;
+}
+
+.phonology {
+  font-family: Gentium;
+  font-size: 11pt;
+  width: 95%;
+}
+
+.version-info {
+  font-family: serif;
+  font-size: 7pt;
+  text-align: left;
+  display: inline;
+  float: right;
+  -webkit-user-select: none;
+}
+
+.lex-body {
+  white-space: pre-line;
+}
+.lex-entry {
+  font-family: Gentium;
+  font-size: 11pt;
+  transition: 0.3s;
+  padding: 1em;
+}
+
+.variants {
+  font-family: Gentium;
+  font-size: 11pt;
+}
+.variants div.column {
+  margin: 0.6em;
+}
+
+.capitalize {
+  text-transform: capitalize;
+}
+
+.tag-item {
+  font-family: serif;
+  font-size: 7pt;
+  border-radius: 7%;
+  width: fit-content;
+  padding: 0.2em;
+  margin: 0.2em;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.sense {
+  font-family: Gentium;
+  font-size: 9pt;
+  border-radius: 7%;
+  width: fit-content;
+  padding: 0.2em;
+  margin: 0.2em;
+  font-weight: bold;
+  font-style: italic;
+  display: inline-block;
+  background-color: transparent;
+  margin-top: 1em;
+}
+
+.lect {
+  font-family: serif;
+  font-size: 9pt;
+  font-style: italic;
+  margin-top: 0.1em;
+}
+
+[id=entry-counter] {
+  font-family: serif;
+  font-size: 7pt;
+  border-radius: 7%;
+  width: fit-content;
+  padding: 0.2em;
+  margin: 0.2em;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin: auto;
+}
+
+.scrolled {
+  overflow-y: auto;
+  overflow-x: wrap;
+}
+
+.container {
+  border-radius: 6px;
+  text-align: center;
+  margin: 6px;
+  padding: 6px;
+}
+
+.row button {
+  padding: 2px 10px 2px 10px;
+  margin: 4px auto 4px auto;
+  display: flex;
+  width: fit-content;
+  border: 1px solid black;
+  border-radius: 8px;
+}
+
+label {
+  font-family: serif;
+  font-size: 11pt;
+  -webkit-user-select: none;
+}
+
+.pronunciation {
+  font-family: Gentium;
+  font-size: 9pt;
+}
+
+textarea, input {
+  font-family: Gentium;
+  font-size: 11pt;
+  display: flex;
+  text-align: center;
+  padding: 4px;
+  margin: 1px auto 1px auto;
+  border: none;
+  border-radius: 3px;
+  width: 80%;
+  resize: vertical;
+  transition: 0.2s;
+}
+textarea .pronunciation, input .pronunciation {
+  font-family: Gentium;
+  font-size: 9pt;
+}
+textarea[type=number], input[type=number] {
+  padding: 1px;
+  width: 4em;
+}
+textarea[type=checkbox], input[type=checkbox] {
+  appearance: none;
+  margin: auto;
+  font: inherit;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.15em;
+  transform: translateY(-0.075em);
+  display: grid;
+  place-content: center;
+}
+textarea[type=checkbox]::before, input[type=checkbox]::before {
+  content: "";
+  width: 0.65em;
+  height: 0.65em;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+}
+textarea[type=checkbox]:checked::before, input[type=checkbox]:checked::before {
+  transform: scale(1);
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.header input {
+  width: 70%;
+}
+
+.narrow {
+  width: 50%;
+  margin: auto;
+}
+.narrow-col {
+  width: 15%;
+}
+
+.search {
+  text-align: left;
+  width: 100%;
+  margin: 2px auto 2px auto;
+}
+
+.search-container {
+  padding: 0 0.5em 0 0.5em;
+  position: relative;
+}
+
+table {
+  border-collapse: collapse;
+  width: 95%;
+}
+table-container {
+  font-family: Gentium;
+  font-size: 11pt;
+  margin: auto;
+  padding: 30px 5%;
+}
+table-title {
+  font-family: Gentium;
+  font-size: 14pt;
+  font-style: italic;
+}
+
+td {
+  padding: 2px 6px 2px 6px;
+  text-align: center;
+  user-select: none;
+}
+
+.inflection {
+  font-family: Gentium;
+  font-size: 7pt;
+}
+.inflection h1, .inflection h2, .inflection h3, .inflection h4, .inflection h5, .inflection h6 {
+  padding-top: 0.2em;
+}
+.inflection h1 {
+  font-size: 1.5em;
+}
+.inflection h2 {
+  font-size: 1.3em;
+}
+.inflection h3 {
+  font-size: 1.1em;
+}
+.inflection h4 {
+  font-size: 1em;
+}
+.inflection h5 {
+  font-size: 0.9em;
+}
+.inflection h6 {
+  font-size: 0.8em;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+  transition: 0.2s;
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+::-webkit-scrollbar-corner {
+  border-radius: 6px 0px 0px 0px;
+}
+::-webkit-resizer {
+  border-radius: 6px 0px 0px 0px;
+}
+
+hr {
+  margin-bottom: 0.2em;
+  margin-top: 0.2em;
+  max-width: 66.66%;
+  padding: 0px;
+}
+
+.milkyWay {
+  width: 100px;
+  height: 100px;
+  background: transparent;
+  margin: auto;
+  position: relative;
+  border-radius: 50%;
+}
+.milkyWay .planet {
+  border: 1px solid white;
+  animation-name: orbit;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-play-state: paused;
+}
+.milkyWay .planet::before, .milkyWay .planet::after {
+  position: absolute;
+  content: "";
+  display: block;
+  border-radius: 50%;
+}
+.milkyWay > div {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.sun {
+  background: #faca09;
+  width: 10%;
+  height: 10%;
+  top: 45%;
+  left: 45%;
+}
+
+.mercury {
+  width: 20%;
+  height: 20%;
+  top: calc(40% - 1px);
+  left: calc(40% - 1px);
+  animation-duration: 2s;
+}
+.mercury::before {
+  background: #9fb5b6;
+  width: 16%;
+  height: 16%;
+  top: -8%;
+  left: 42%;
+}
+
+.venus {
+  width: 30%;
+  height: 30%;
+  top: calc(35% - 1px);
+  left: calc(35% - 1px);
+  animation-duration: 3s;
+}
+.venus::before {
+  background: #ECC98E;
+  width: 10%;
+  height: 10%;
+  top: -5%;
+  left: 45%;
+}
+
+.earth {
+  width: 40%;
+  height: 40%;
+  top: calc(30% - 1px);
+  left: calc(30% - 1px);
+  animation-duration: 4s;
+}
+.earth::before {
+  background: #208fd8;
+  width: 10%;
+  height: 10%;
+  top: -5%;
+  left: 45%;
+}
+.earth::after {
+  background: #33c470;
+  width: 10%;
+  height: 6%;
+  top: -3%;
+  left: 45%;
+  transform: rotate(45deg);
+}
+
+.mars {
+  width: 50%;
+  height: 50%;
+  top: calc(25% - 1px);
+  left: calc(25% - 1px);
+  animation-duration: 5s;
+}
+.mars::before {
+  background: #d35400;
+  width: 6%;
+  height: 6%;
+  top: -3%;
+  left: 47%;
+}
+
+.jupiter {
+  width: 60%;
+  height: 60%;
+  top: calc(20% - 1px);
+  left: calc(20% - 1px);
+  animation-duration: 6s;
+}
+.jupiter::before {
+  background: #d4975a;
+  width: 10%;
+  height: 10%;
+  top: -5%;
+  left: 45%;
+}
+
+.saturn {
+  width: 70%;
+  height: 70%;
+  top: calc(15% - 1px);
+  left: calc(15% - 1px);
+  animation-duration: 7s;
+}
+.saturn::before {
+  background: #E4D191;
+  width: 7%;
+  height: 7%;
+  top: -4%;
+  left: 48%;
+}
+.saturn::after {
+  background: #F0E4C1;
+  width: 12%;
+  height: 1%;
+  top: -1%;
+  left: 45.5%;
+  transform: rotate(-15deg);
+}
+
+.uranus {
+  width: 80%;
+  height: 80%;
+  top: calc(10% - 1px);
+  left: calc(10% - 1px);
+  animation-duration: 8s;
+}
+.uranus::before {
+  background: #3498db;
+  width: 5%;
+  height: 5%;
+  top: -2%;
+  left: 48%;
+}
+.uranus::after {
+  background: #b0d0e5;
+  width: 8%;
+  height: 0.5%;
+  top: 0%;
+  left: 46.25%;
+  transform: rotate(-15deg);
+}
+
+.neptune {
+  width: 90%;
+  height: 90%;
+  top: calc(5% - 1px);
+  left: calc(5% - 1px);
+  animation-duration: 9s;
+}
+.neptune::before {
+  background: #1269a3;
+  width: 4%;
+  height: 4%;
+  top: -1%;
+  left: 49%;
+}
+.neptune::after {
+  background: #91cbf2;
+  width: 6%;
+  height: 0.5%;
+  top: 0.5%;
+  left: 48%;
+  transform: rotate(-15deg);
+}
+
+.pluto {
+  width: 100%;
+  height: 100%;
+  top: calc(0% - 1px);
+  left: calc(0% - 1px);
+  animation-duration: 10s;
+}
+.pluto::before {
+  background: #b78c7a;
+  width: 1%;
+  height: 1%;
+  top: -0.5%;
+  left: 49.5%;
+}
+
+@keyframes orbit {
+  0% {
+    transform: rotate(-180deg);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
+/* EditorJS Overrides */
+.ce-toolbar__plus {
+  transition: 0.33s;
+}
+.ce-toolbar__content {
+  max-width: 90% !important;
+}
+.ce-block__content {
+  max-width: 80% !important;
+}
+.ce-block--selected .ce-block__content {
+  background-color: rgba(255, 255, 255, 0.3333333333) !important;
+}
+
+::selection {
+  background-color: rgba(255, 255, 255, 0.3333333333) !important;
+}
+
+/*# sourceMappingURL=index.css.map */
+
+`;

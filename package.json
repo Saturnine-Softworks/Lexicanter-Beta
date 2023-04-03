@@ -1,7 +1,7 @@
 {
   "name": "lexicanterbeta",
   "productName": "Lexicanter-Beta",
-  "version": "2.0.7",
+  "version": "2.0.16",
   "description": "A lexicon management tool for constructed languages.",
   "main": "src/index.js",
   "scripts": {
@@ -9,6 +9,7 @@
     "start": "npm run precompile && electron .",
     "build-mac": "npm run precompile && electron-builder --mac --publish never",
     "build-win": "npm run precompile && electron-builder --win --publish never",
+    "build-linux": "npm run precompile && electron-builder --linux --publish never",
     "publish": "npm run precompile && bash bash/publish.bash",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
@@ -26,6 +27,11 @@
     },
     "mac": {
       "icon": "src/res/alembic-beta.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "src/res/alembic-beta.png",
+      "category": "Office"
     },
     "nsis": {
       "installerIcon": "src/res/alembic-beta.ico",
@@ -53,8 +59,10 @@
     "@editorjs/underline": "^1.1.0",
     "@electron/remote": "^2.0.9",
     "@types/marked": "^4.0.8",
+    "csv-parser": "^3.0.0",
     "electron-updater": "^5.3.0",
     "marked": "^4.3.0",
+    "sass": "^1.60.0",
     "vex-js": "^4.1.0"
   },
   "devDependencies": {

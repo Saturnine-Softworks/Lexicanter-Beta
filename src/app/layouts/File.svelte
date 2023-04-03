@@ -2,16 +2,23 @@
     const fs = require('fs');
     const path = require('path');
     import { docsEditor, Language, selectedCategory, fileLoadIncrement } from '../stores';
-    import type * as Lexc from '../types';
     import type { OutputData } from '@editorjs/editorjs';
     import { userData, showOpenDialog, saveFile, openLegacy, saveAs, importCSV } from '../utils/files';
     import { writeRomans } from '../utils/phonetics';
     import { initializeDocs } from '../utils/docs';
     import * as diagnostics from '../utils/diagnostics';
-    import Lexicon from './Lexicon.svelte';
     const vex = require('vex-js');
     $: loading_message = '';
-    let csvHeaders = true; let csvWords = 2; let csvDefinitions = 3;
+    let csv = {
+        headers: true,
+        words: 1,
+        pronunciations_bool: false,
+        pronunciations: 2,
+        definitions: 3,
+        tags_bool: false,
+        tags: 4,
+    }
+    $: csv;
     let oldPattern = ''; let newPattern = '';
 
     /**
@@ -66,6 +73,8 @@
             $Language.Phonotactics = contents.Phonotactics;
 
             errorMessage = 'There was a problem loading the inflection rules from the file.'
+            let inflections = contents.Inflections;
+            if (!contents.Inflections.categories) inflections.categories = '';
             $Language.Inflections = contents.Inflections;
 
             errorMessage = 'There was a problem loading the etymology data from the file.'
@@ -263,10 +272,13 @@
             <p>HTML</p>
             <div class="row narrow">
                 <div class="column">
-                    <button on:click={saveAs.html.all} class="hover-highlight hover-shadow">Everything</button>
+                    <button on:click={saveAs.html.lexicon} class="hover-highlight hover-shadow">Lexicon Only</button>
                 </div>
                 <div class="column">
-                    <button on:click={saveAs.html.docs} class="hover-highlight hover-shadow">Docs Only</button>
+                    <button on:click={saveAs.html.all} class="hover-highlight hover-shadow">Lexicon & Docs</button>
+                </div>
+                <div class="column">
+                    <button on:click={saveAs.html.docs} class="hover-highlight hover-shadow">Documentation Only</button>
                 </div>
             </div>
             <button on:click={saveAs.txt} class="hover-highlight hover-shadow">Text File</button>
@@ -277,18 +289,45 @@
             <div class="narrow">
                 <div class="row">
                     <div class="column">
-                        <label for="word-column">Words Column</label>
-                        <input type="number" id="word-column" bind:value={csvWords}/>
+                        <label>Words Column
+                            <input type="number" bind:value={csv.words}/>
+                        </label>
                     </div>
                     <div class="column">
-                        <label for="def-column">Definitions Column</label>
-                        <input type="number" id="def-column" bind:value={csvDefinitions}/>
+                        <label>Pronunciations Column
+                            <input type="checkbox" bind:value={csv.pronunciations_bool}/>
+                            {#if csv.pronunciations_bool}
+                                <input type="number" bind:value={csv.pronunciations}/>
+                            {/if}
+                        </label>
                     </div>
+                    <div class="column">
+                        <label>Definitions Column
+                            <input type="number" bind:value={csv.definitions}/>
+                        </label>
+                    </div>
+                    <div class="column">
+                        <label>Tags Column
+                            <input type="checkbox" bind:value={csv.tags_bool}/>
+                            {#if csv.tags_bool}
+                                <input type="number" bind:value={csv.tags}/>
+                            {/if}
+                        </label>
+                    </div>
+
                 </div>
             </div>
             <label for="row-one-is-labels">First Row Is Column Labels</label>
-            <input type="checkbox" id="row-one-is-labels" bind:checked={csvHeaders}/>
-            <button on:click={() => importCSV(csvHeaders, csvWords, csvDefinitions)} class="hover-highlight hover-shadow">Import</button>
+            <input type="checkbox" id="row-one-is-labels" bind:checked={csv.headers}/>
+            <button on:click={() => 
+                importCSV(
+                    csv.headers, 
+                    csv.words, 
+                    csv.definitions, 
+                    csv.pronunciations_bool? csv.pronunciations : false,
+                    csv.tags_bool? csv.tags : false
+                )
+            } class="hover-highlight hover-shadow">Import</button>
             <br><br>
         </div>
     </div>

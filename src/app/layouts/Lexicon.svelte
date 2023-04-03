@@ -1,6 +1,6 @@
 <script lang="ts">
     const { ipcRenderer } = require('electron');
-    import { Language, wordInput, pronunciations, selectedTab } from '../stores';
+    import { Language, wordInput, pronunciations, selectedTab, hideDropdowns } from '../stores';
     import type * as Lexc from '../types';
     import { alphabetize, alphabetPrecheck } from '../utils/alphabetize';
     import { get_pronunciation } from '../utils/phonetics';
@@ -9,6 +9,9 @@
     import { debug } from '../utils/diagnostics';
     const vex = require('vex-js');
 
+    ipcRenderer.on('update-lexicon-for-gods-sake-please', () => {
+        $Language.Lexicon = {...$Language.Lexicon};
+    });
     let defInputs = [''];
     let searchWords = ''; let searchDefinitions = ''; let searchTags = ''; let lectFilter = '';
     $: searchWords, searchDefinitions, searchTags, lectFilter; // Update the search when these values change
@@ -25,7 +28,7 @@
         $Language.Lexicon; 
         $Language.ShowEtymology; $Language.Etymologies; 
         $Language.ShowInflection; $Language.Inflections; 
-        $Language.Alphabet; $Language.Pronunciations;
+        $Language.Alphabet;
         keys;
         (() => {
             alphabetized = alphabetize(!!keys.length? filtered_lex : $Language.Lexicon)
@@ -47,8 +50,8 @@
 
     let lectSet: string[]
     $: { // Update the set of lects when the `senses` array changes
-        senses;
-        lectSet = Array.from(new Set(senses.map(sense => [...sense.lects]).flat()))
+        senses; $Language.Lects; $Language.UseLects;
+        lectSet = Array.from(new Set(senses.map(sense => [...sense.lects]).flat().filter(lect => $Language.Lects.includes(lect))))
     }
 
     function scrollIntoView(word: string) {
@@ -93,8 +96,14 @@
                 lects: sense.lects,
             }));
             // debug.logObj(senses, 'senses');
-            delete $Language.Lexicon[word];
-            $Language.Lexicon = {...$Language.Lexicon}; // assignment trigger
+            $hideDropdowns = true;
+            // timeout is necessary to let the dropdowns close before the lexicon is updated
+            // hiding the inflections dropdowns is necessary to prevent a persistency bug that can lead to a soft crash
+            window.setTimeout(() => {
+                let { [word]: _, ...rest } = $Language.Lexicon;
+                $Language.Lexicon = rest;
+                $hideDropdowns = false;
+            }, 50);
         }
     }
 
@@ -277,7 +286,7 @@
                 <input id="wrd-input" type="text"
                     bind:value={$wordInput}
                     on:input={() => {
-                        Object.keys($pronunciations).forEach(lect => {
+                        lectSet.forEach(lect => {
                             $pronunciations[lect] = get_pronunciation($wordInput, lect);
                         });
                     }}
@@ -311,7 +320,7 @@
                     />
                 {/each}
                 <button class="hover-highlight hover-shadow" id="add-sense-button" on:click={() => {
-                    senses = [...senses, {definition: '', tags: '', lects: []}];
+                    senses = [...senses, {definition: '', tags: '', lects: [...$Language.Lects]}];
                 }}>Add Sense</button>
                 {#if !($wordInput in $Language.Lexicon)}
                     <button class="hover-highlight hover-shadow" id="add-word-button" on:click={() => addWord(false)}>Add Word</button>

@@ -1,5 +1,5 @@
 <script lang='ts'>
-    import { Language } from "../stores";
+    import { Language, hideDropdowns } from "../stores";
     import * as diagnostics from "../utils/diagnostics";
     import { blur } from 'svelte/transition';
     import * as sca from "../utils/sca";
@@ -18,6 +18,7 @@
 
     $: {
         word; tags; $Language.Inflections; $Language.Lexicon;
+        let categories = '';
         data = structuredClone($Language.Inflections)
             .filter(inflection => {
                 let filter: RegExp;
@@ -29,21 +30,20 @@
                 }
                 return (inflection.tags[0]? inflection.tags.some(tag => tags.includes(tag)) : true) && word.match(filter)
             })
-            .map(inflection => inflection.tables.blocks);
+            .map(inflection => {
+                categories += inflection.categories + '\n';
+                return inflection.tables.blocks
+            });
 
         data.forEach((blocks, i) => {
             blocks.forEach((block, j) => {
                 if (block.type !== 'table') return;
                 block.data.content.forEach((row: string[], y: number) => {
                     row.forEach((cell: string, x: number) => {
-                        const settings = sca.parseRules(htmlToText(cell));
-                        /* console.log(
-                            'settings.rules:', settings.rules,
-                            '\nword:', word,
-                            '\nsca.applyRules(...):', sca.applyRules(settings.rules, word, settings.categories)
-                        ); */
-                        if (!settings.rules[0]) return
-                        data[i][j].data.content[y][x] = sca.applyRules(settings.rules, word, settings.categories);
+                        const rules = sca.parseRules(htmlToText(cell)).rules;
+                        const cats = sca.parseRules(categories).categories;
+                        if (!rules[0]) return
+                        data[i][j].data.content[y][x] = sca.applyRules(rules, word, cats);
                     });
                 });
             });
@@ -53,7 +53,7 @@
 
 {#if data[0]}
     <button class='inflection hover-highlight' on:click={() => show = !show}>Inflections {show? '⏶' : '⏷'}</button>
-    {#if show}
+    {#if show && !$hideDropdowns}
         <div class='inflection' transition:blur='{{amount: 10, duration: 333}}'>
             {#each data.flat() as block}
                 {#if block.type === 'header'}
