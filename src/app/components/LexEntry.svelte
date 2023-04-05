@@ -11,7 +11,8 @@
     const edit = () => dispatch('edit')
     export let word: string;
     export let source: Word;
-    export let showEtymology: boolean
+    export let showEtymology: boolean;
+    export let showInflections: boolean = false;
 
     function getAncestors(): string {
         const ancestors: string[][] = [];
@@ -82,8 +83,8 @@
             <hr />
             <p class="lex-body"><i>{entryAncestors}</i></p>
         {/if}
-        {#if $Language.ShowInflection}
-            <Inflections {word} tags={Sense.tags}/>
+        {#if $Language.ShowInflection || showInflections}
+            <Inflections {word} tags={Sense.tags} readFromReference={showInflections}/>
         {/if}
     {/each}
 </div>

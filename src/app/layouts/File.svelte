@@ -1,8 +1,9 @@
 <script lang="ts">
     const fs = require('fs');
     const path = require('path');
-    import { docsEditor, Language, selectedCategory, fileLoadIncrement } from '../stores';
+    import { docsEditor, Language, selectedCategory, fileLoadIncrement, referenceLanguage } from '../stores';
     import type { OutputData } from '@editorjs/editorjs';
+    import type * as Lexc from '../types';
     import { userData, showOpenDialog, saveFile, openLegacy, saveAs, importCSV } from '../utils/files';
     import { writeRomans } from '../utils/phonetics';
     import { initializeDocs } from '../utils/docs';
@@ -216,6 +217,62 @@
         oldPattern = ''; newPattern = '';
     }
 
+    async function openReferenceFile() {
+        let contents;
+        let dialog = (userPath: string) => {
+            showOpenDialog(
+                {
+                    title: 'Open Lexicon',
+                    defaultPath: `${userPath}${path.sep}Lexicons${path.sep}`,
+                    properties: ['openFile'],
+                },
+                file_path => {
+                    if (file_path === undefined) {
+                        // stop orbit animation
+                        document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
+                            planet.style.animationPlayState = 'paused';
+                        });
+                        loading_message = 'No file selected.';
+                        window.setTimeout(() => {
+                            loading_message = '';
+                        }, 5000);
+                        return;
+                    }
+                    fs.readFile(file_path[0], 'utf8', (err, data: string) => {
+                        if (err) {
+                            console.log(err);
+                            vex.dialog.alert(
+                                'There was an issue loading your file. Please contact the developer.'
+                                );
+                            diagnostics.logError('Attempted to open a file.', err);
+                            document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
+                                // loading anim stop
+                                planet.style.animationPlayState = 'paused';
+                            });
+                            loading_message = 'Couldn’t open file.';
+                            window.setTimeout(() => { loading_message = ''; }, 5000);
+                            return;
+                        }
+                        contents = JSON.parse(data) as Lexc.Language;
+                        if (contents.Name === $Language.Name){
+                            vex.dialog.alert('You cannot open a reference to the same language.');
+                            document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
+                                // loading anim stop
+                                planet.style.animationPlayState = 'paused';
+                            });
+                            loading_message = 'Same language.';
+                            window.setTimeout(() => { loading_message = ''; }, 5000);
+                            return;
+                        } else $referenceLanguage = contents;
+                    });
+                }
+            );
+        }
+        await userData(userPath => {
+            dialog(userPath);
+        });
+    }
+
 </script>
 <!-- File Tab -->
 <div class="tab-pane">
@@ -256,8 +313,11 @@
                 </p>
             </div>
             <br>
-            <button class="hover-highlight hover-shadow"
-                on:click={() => window.open('index.html', '_blank', 'height=900, width=900')}>Open New Window</button>
+            <button class="hover-highlight hover-shadow" on:click={openReferenceFile}>Open Reference File</button>
+            {#if typeof $referenceLanguage === 'object'}
+                <p>Reference Language: {$referenceLanguage.Name}</p>
+                <button on:click={()=>$referenceLanguage = false} class="hover-highlight hover-shadow">Close Reference File</button>
+            {/if}
             <br>
             <p>Change Pronunciations & Orthography</p>
             <div class="narrow">

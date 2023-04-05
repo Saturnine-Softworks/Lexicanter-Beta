@@ -1,5 +1,5 @@
 <script lang='ts'>
-    import { Language } from '../stores';
+    import { Language, referenceLanguage } from '../stores';
     import { alphabetize } from '../utils/alphabetize';
     import { debug } from '../utils/diagnostics';
     import type * as Lexc from '../types';
@@ -104,8 +104,8 @@
     $: {
         $Language; selectedEntry;
         tree = createTreeData();
-        width = window.innerWidth * .82;
-        height = window.innerHeight * .47;
+        width = window.innerWidth * .82 * ($referenceLanguage? .66 : 1);
+        height = window.innerHeight * .47
     };
 </script>
 

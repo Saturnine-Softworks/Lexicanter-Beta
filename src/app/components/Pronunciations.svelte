@@ -4,7 +4,7 @@
 
     export let pronunciations: Lect.EntryPronunciations;
 </script>
-{#if $Language.UseLects}
+{#if Object.keys(pronunciations).length > 1 || $Language.UseLects || pronunciations.General === undefined}
     {#each Object.keys(pronunciations) as lect}
         <p class="lect">
             <u>{lect}</u>

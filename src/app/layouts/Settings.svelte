@@ -334,7 +334,7 @@
                     {#each $Language.Lects as lect, lectIndex}
                         <div class="narrow">
                             <p style="display: inline-block" id={`${lectIndex}`}>{lect}</p>
-                            <button class="hover-highlight hover-shadow" style="display: inline-block" on:click={()=>{
+                            <button class="hover-highlight hover-shadow" style="display: inline-block" on:click={() => {
                                 if ($Language.Lects.length === 1) {
                                     vex.dialog.alert('You cannot delete the last lect.');
                                     return;
@@ -349,7 +349,7 @@
                                     }
                                 });
                             }}> ⌫ </button>
-                            <button class="hover-highlight hover-shadow" style="display: inline-block" on:click={()=>{
+                            <button class="hover-highlight hover-shadow" style="display: inline-block" on:click={() => {
                                 vex.dialog.prompt({
                                     message: 'Edit Lect Name',
                                     placeholder: `${lect}`,
@@ -362,13 +362,13 @@
                                     }
                                 })
                             }}> ✎ </button>
-                            <button class="hover-highlight hover-shadow" style="display: inline-block;" on:click={()=>{
+                            <button class="hover-highlight hover-shadow" style="display: inline-block;" on:click={() => {
                                 vex.dialog.confirm({
                                     message: `Add all words in the lexicon to the lect ‘${lect}’?`,
                                     callback: function (response) {
                                         if (response) {
                                             for (let word in $Language.Lexicon) {
-                                                $Language.Lexicon[word].Senses.forEach(sense=>{
+                                                $Language.Lexicon[word].Senses.forEach(sense => {
                                                     if (!sense.lects.includes(lect)) {
                                                         sense.lects.push(lect);
                                                     }
