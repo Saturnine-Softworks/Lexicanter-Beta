@@ -85,7 +85,7 @@
             </div>
 
             {#if $referenceLanguage}
-                <div class="column" style="width: 33%">
+                <div class="column tab-pane reference" style="width: 33%">
                     <Reference/>
                 </div>
             {/if}

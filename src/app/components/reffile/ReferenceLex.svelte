@@ -1,13 +1,12 @@
 <script lang='ts'>
-    import type * as Lexc from '../types';
-    import { referenceLanguage } from '../stores';
-    import { alphabetize } from '../utils/alphabetize';
-    import LexEntry from './LexEntry.svelte';
+    import type * as Lexc from '../../types';
+    import { referenceLanguage } from '../../stores';
+    import { alphabetize } from '../../utils/alphabetize';
+    import LexEntry from '../LexEntry.svelte';
     let Language: Lexc.Language;
     let alphabetized: string[];
     $: {
         Language = $referenceLanguage as Lexc.Language;
-        console.log(Language);
         alphabetized = alphabetize(Language.Lexicon);
     };
 
@@ -70,7 +69,11 @@
 
 <div class="scrolled" style="height: 88%">
     {#each alphabetized as word}
-        <LexEntry word={word} source={Language.Lexicon[word]} showEtymology={true} showInflections={Language.ShowInflection}/>
+        <LexEntry {word} 
+            source={Language.Lexicon[word]} 
+            showInflections={Language.ShowInflection}
+            showEtymology 
+        />
     {:else}
         <p class="info" id="ref-lex-body">The lexicon of {Language.Name} is empty.</p>
     {/each}

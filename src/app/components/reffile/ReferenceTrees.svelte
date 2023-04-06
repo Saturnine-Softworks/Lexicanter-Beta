@@ -1,9 +1,9 @@
 <script lang='ts'>
-    import { referenceLanguage } from '../stores';
-    import type { Language, Lexicon } from '../types';
-    import Tree from './Tree.svelte';
-    import LexEntry from './LexEntry.svelte';
-    import { alphabetize } from '../utils/alphabetize';
+    import { referenceLanguage } from '../../stores';
+    import type { Language, Lexicon } from '../../types';
+    import Tree from '../Tree.svelte';
+    import LexEntry from '../LexEntry.svelte';
+    import { alphabetize } from '../../utils/alphabetize';
     let Language = $referenceLanguage as Language;
     $: Language = $referenceLanguage as Language;
 
@@ -96,7 +96,7 @@
     <LexEntry 
         word={selectedEntry} 
         source={Language.Lexicon[selectedEntry]} 
-        showEtymology={true}
         showInflections={Language.ShowInflection}
+        showEtymology
     />
 {/if}

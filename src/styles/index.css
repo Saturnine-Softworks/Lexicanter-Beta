@@ -421,29 +421,29 @@ td {
   user-select: none;
 }
 
-.inflection {
+.inflection, .reference {
   font-family: Gentium;
-  font-size: 7pt;
+  font-size: 9pt;
 }
-.inflection h1, .inflection h2, .inflection h3, .inflection h4, .inflection h5, .inflection h6 {
+.inflection h1, .inflection h2, .inflection h3, .inflection h4, .inflection h5, .inflection h6, .reference h1, .reference h2, .reference h3, .reference h4, .reference h5, .reference h6 {
   padding-top: 0.2em;
 }
-.inflection h1 {
+.inflection h1, .reference h1 {
   font-size: 1.5em;
 }
-.inflection h2 {
+.inflection h2, .reference h2 {
   font-size: 1.3em;
 }
-.inflection h3 {
+.inflection h3, .reference h3 {
   font-size: 1.1em;
 }
-.inflection h4 {
+.inflection h4, .reference h4 {
   font-size: 1em;
 }
-.inflection h5 {
+.inflection h5, .reference h5 {
   font-size: 0.9em;
 }
-.inflection h6 {
+.inflection h6, .reference h6 {
   font-size: 0.8em;
 }
 

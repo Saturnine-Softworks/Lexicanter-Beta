@@ -1,12 +1,15 @@
 <script lang='ts'>
     const { ipcRenderer } = require('electron');
     import { referenceLanguage } from '../stores';
-    import ReferenceLex from '../components/ReferenceLex.svelte';
-    import ReferenceTrees from '../components/ReferenceTrees.svelte';
-    import ReferenceDocs from '../components/ReferenceDocs.svelte';
+    import ReferenceLex from '../components/reffile/ReferenceLex.svelte';
+    import ReferenceTrees from '../components/reffile/ReferenceTrees.svelte';
+    import ReferenceDocs from '../components/reffile/ReferenceDocs.svelte';
+    import ReferencePhono from '../components/reffile/ReferencePhono.svelte';
+    import ReferenceBook from '../components/reffile/ReferenceBook.svelte';
+    import ReferenceInflect from '../components/reffile/ReferenceInflect.svelte';
 
-    const tab_btns = ['Lexicon', 'Etymology', 'Docs'];
-    const tabs = [ReferenceLex, ReferenceTrees, ReferenceDocs];
+    const tab_btns = ['Lex', 'Etym.', 'Phrases', 'Inflect.', 'Phono.', 'Docs'];
+    const tabs = [ReferenceLex, ReferenceTrees, ReferenceBook, ReferenceInflect, ReferencePhono, ReferenceDocs];
     let selectedTab = 0;
 
     let version: string;
@@ -19,9 +22,9 @@
     <div class="button-container">
         <p class="version-info">β{version}-{platform} —</p>
         {#each tab_btns as tab, i}
-            {#if (tab !== 'Etymology' && tab !== 'Inflection')
-                || (tab === 'Etymology' && $referenceLanguage.ShowEtymology)
-                || (tab === 'Inflection' && $referenceLanguage.ShowInflection)
+            {#if (tab !== 'Etym.' && tab !== 'Inflect.')
+                || (tab === 'Etym.' && $referenceLanguage.ShowEtymology)
+                || (tab === 'Inflect.' && $referenceLanguage.ShowInflection)
             }
                 <button class:selected={selectedTab === i} class='hover-highlight tab-button'
                     on:click={() => selectedTab = i}

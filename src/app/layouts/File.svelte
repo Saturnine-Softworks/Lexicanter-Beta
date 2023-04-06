@@ -263,7 +263,12 @@
                             loading_message = 'Same language.';
                             window.setTimeout(() => { loading_message = ''; }, 5000);
                             return;
-                        } else $referenceLanguage = contents;
+                        } else {
+                            $referenceLanguage = false;
+                            window.setTimeout(() => {
+                                $referenceLanguage = contents;
+                            }, 100);
+                        };
                     });
                 }
             );
