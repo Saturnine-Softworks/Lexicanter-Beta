@@ -20,6 +20,8 @@ export const Language: Writable<Lexc.Language> = writable({
     Pronunciations: <Lexc.Pronunciations> {
         General: 'place > holder'
     },
+    Orthographies: <Lexc.Orthography[]> [],
+    ShowOrthography: false,
     Phonotactics: <Lexc.Phonotactics> {
         General: <Lexc.PhonotacticsLect> {
             Onsets: '',

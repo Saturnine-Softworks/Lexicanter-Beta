@@ -328,7 +328,7 @@
             <br><hr/><br>
 
             <p>Advanced Settings</p> <br>
-            <label>Use Lects
+            <label>Show Multi-Lect Features
                 <input type="checkbox" bind:checked={$Language.UseLects} on:change={confirmUseLectsChange}/>
                 {#if $Language.UseLects}
                     {#each $Language.Lects as lect, lectIndex}
@@ -400,9 +400,7 @@
                     }}> + Lect </button>
                 {/if}
             </label>
-
             <br><br>
-
             <label>Show Etymology Features
                 <input type="checkbox" bind:checked={$Language.ShowEtymology}/>
                 {#if $Language.ShowEtymology}
@@ -433,6 +431,10 @@
             <br><br>
             <label>Show Automatic Inflection Features
                 <input type="checkbox" bind:checked={$Language.ShowInflection}/>
+            </label>
+            <br><br>
+            <label>Show Alternate Orthography Features
+                <input type="checkbox" bind:checked={$Language.ShowOrthography}/>
             </label>
         </div>
     </div>

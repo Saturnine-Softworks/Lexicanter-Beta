@@ -70,6 +70,12 @@
             $Language.Pronunciations = contents.Pronunciations; 
             $Language.Lects.forEach(writeRomans);
 
+            errorMessage = 'There was a problem loading the orthography data from the file.'
+            if (contents.Orthographies) {
+                $Language.Orthographies = contents.Orthographies;
+                $Language.ShowOrthography = contents.ShowOrthography;
+            }
+            
             errorMessage = 'There was a problem loading the phonotactics rules from the file.'
             $Language.Phonotactics = contents.Phonotactics;
 

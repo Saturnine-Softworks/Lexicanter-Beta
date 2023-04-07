@@ -143,6 +143,13 @@ export type Etymologies = {
     };
 }
 
+export type Orthography = {
+    name: string;
+    font: string;
+    root: 'rom' | 'ipa';
+    rules: string
+}
+
 /**
  * A language is a collection of words, phrases, organization and configuration settings, and sets of pronunciation rules.
  * Below are all the places where the name of key should be the name of a lect:
@@ -182,6 +189,8 @@ export type Language = {
     Phrasebook: Phrasebook;
     Alphabet: string;
     Pronunciations: Pronunciations;
+    Orthographies: Orthography[];
+    ShowOrthography: boolean;
     Phonotactics: Phonotactics;
     Lects: string[];
     Docs: OutputData;

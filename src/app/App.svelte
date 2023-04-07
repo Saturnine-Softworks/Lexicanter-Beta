@@ -15,6 +15,7 @@
     import { saveFile } from './utils/files'
     import * as diagnostics from './utils/diagnostics'
     import Inflection from './layouts/Inflection.svelte';
+    import Wiki from './layouts/Wiki.svelte';
     import Reference from './layouts/Reference.svelte';
 
     // Debug block
@@ -22,8 +23,8 @@
         // diagnostics.debug.logObj($Language, 'An update was made to the Language store', false);
     }
 
-    const tabs = [Lexicon, Etymology, Phrasebook, Inflection, Phonology, Documentation, File, Settings, Changelog]
-    const tab_btns = ['Lexicon', 'Etymology', 'Phrasebook', 'Inflection', 'Phonology', 'Documentation', 'File', 'Settings', 'Changelog'];
+    const tabs = [Lexicon, Etymology, Phrasebook, Inflection, Phonology, null, Documentation, File, Settings, Changelog, Wiki]
+    const tab_btns = ['Lexicon', 'Etymology', 'Phrasebook', 'Inflection', 'Phonology', 'Orthography', 'Documentation', 'File', 'settings', 'history', 'help'];
 
     /**
      * This block listens for the 'app-close' event, which is sent by the main
@@ -67,11 +68,19 @@
                         <p class="version-info">β{version}-{platform} —</p>
                     {/if}
                     {#each tab_btns as tab, i}
-                        {#if (tab !== 'Etymology' && tab !== 'Inflection')
+                        {#if (tab !== 'Etymology' && tab !== 'Inflection' && tab !== 'Orthography')
                             || (tab === 'Etymology' && $Language.ShowEtymology)
                             || (tab === 'Inflection' && $Language.ShowInflection)
+                            || (tab === 'Orthography' && $Language.ShowOrthography)
                         }
-                            <button class:selected={$selectedTab === i} class='hover-highlight tab-button'
+                            <button 
+                                class:selected={$selectedTab === i} 
+                                class='hover-highlight tab-button'
+                                style={
+                                    ['settings', 'history', 'help'].includes(tab)
+                                        ? 'font-family: "Material Icons"; font-size: 1em; vertical-align: bottom; height: 1.8em;'
+                                        : ''
+                                }
                                 on:click={() => $selectedTab = i}
                             > {tab} </button>
                         {/if}
