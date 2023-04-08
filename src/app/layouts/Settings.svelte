@@ -9,6 +9,7 @@
     import { debug, logAction } from '../utils/diagnostics';
     import { get_pronunciation } from '../utils/phonetics';
     import Etymology from './Etymology.svelte';
+    import Orthography from './Orthography.svelte';
     /**
      * When the app loads, this block runs to check if the user has
      * previously set a theme preference. If not, it creates a file in the
@@ -54,6 +55,15 @@
                 };
             });
         });
+    }
+
+    /**
+     * Orthography checkboxes have to do some tests before allowing their state to be toggled, so their default behaviour is prevented and
+     * must be handled manually.
+     */
+    function toggleChecked(event) {
+        const target = event.target as HTMLInputElement;
+        target.checked = !target.checked;
     }
 
     /**
@@ -145,7 +155,24 @@
                     sense.lects.push(name);
                 }
             })
-        })
+        });
+        Object.keys($Language.Phrasebook).forEach(category => {
+            Object.keys($Language.Phrasebook[category]).forEach((p: string, i: number) => {
+                const phrase = $Language.Phrasebook[category][p];
+                if (phrase.pronunciations.hasOwnProperty(lect)) {
+                    phrase.pronunciations[name] = phrase.pronunciations[lect];
+                    delete phrase.pronunciations[lect];
+                }
+                if (phrase.lects.includes(lect)) {
+                    $Language.Phrasebook[category][p].lects.splice(phrase.lects.indexOf(lect), 1);
+                    $Language.Phrasebook[category][p].lects.push(name);
+                }
+            })
+        });
+
+        $Language.Orthographies.forEach(ortho => {
+            if (ortho.lect === lect) ortho.lect = name;
+        });
         $Language.Pronunciations[name] = $Language.Pronunciations[lect];
         if ($pronunciations.hasOwnProperty(lect)) {
             $pronunciations[name] = $pronunciations[lect];
@@ -171,6 +198,25 @@
                     $Language.Lexicon[word].Senses.splice(i, 1);
                 }
             })
+        });
+        Object.keys($Language.Phrasebook).forEach(category => {
+            Object.keys($Language.Phrasebook[category]).forEach((p: string, i: number) => {
+                const phrase = $Language.Phrasebook[category][p];
+                if (phrase.pronunciations[lect]) {
+                    delete phrase.pronunciations[lect];
+                }
+                if (phrase.lects.includes(lect)) {
+                    $Language.Phrasebook[category][p].lects.splice(phrase.lects.indexOf(lect), 1);
+                }
+                if (!phrase.lects) {
+                    const {[p]: _, ...rest} = $Language.Phrasebook[category];
+                    $Language.Phrasebook[category] = rest;
+                }
+            })
+        });
+
+        $Language.Orthographies.forEach(ortho => {
+            if (ortho.lect === lect) ortho.lect = $Language.Lects[0];
         });
         $Language.Lexicon = {...$Language.Lexicon};
     }
@@ -287,7 +333,6 @@
     <div class="row" style="height: 95vh">
         <div class="container column scrolled" style="height: 90vh;">
             <br><br>
-            
             <p>Appearance Settings</p> <br>
             <label>Color Theme
                 <select 
@@ -434,7 +479,21 @@
             </label>
             <br><br>
             <label>Show Alternate Orthography Features
-                <input type="checkbox" bind:checked={$Language.ShowOrthography}/>
+                <input type=checkbox bind:checked={$Language.ShowOrthography}/>
+                {#if $Language.ShowOrthography}
+                    <label>Display Orthographies
+                        {#each $Language.Orthographies as orthography}
+                            <div class="row narrow">
+                                <div class=column style:align=right>
+                                    <input type=checkbox bind:checked={orthography.display}/>
+                                </div>
+                                <div class="column text-left">
+                                    <p>{orthography.name}</p>
+                                </div>
+                            </div>
+                        {/each}
+                    </label>
+                {/if}
             </label>
         </div>
     </div>

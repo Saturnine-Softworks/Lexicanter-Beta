@@ -102,7 +102,7 @@
     let tree: Node;
     let width: number; let height: number;
     $: {
-        $Language; selectedEntry;
+        selectedEntry;
         tree = createTreeData();
         width = window.innerWidth * .82 * ($referenceLanguage? .66 : 1);
         height = window.innerHeight * .47

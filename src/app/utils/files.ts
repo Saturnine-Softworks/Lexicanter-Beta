@@ -6,14 +6,14 @@ const vex = require('vex-js');
 import { get } from 'svelte/store';
 import type { OutputData } from '@editorjs/editorjs';
 import type * as Lexc from '../types';
-import { Language, autosave, docsEditor } from '../stores';
+import { Language, autosave, docsEditor, defaultLanguage } from '../stores';
 import { writeRomans, get_pronunciation } from './phonetics';
 import { initializeDocs } from './docs';
 import * as diagnostics from './diagnostics';
 import { alphabetize } from './alphabetize';
 import { markdownToHtml } from './markdown';
-
 const Lang = () => get(Language);
+const Default = get(defaultLanguage);
 
 /**
  * This function is used to get the user's data path.
@@ -462,39 +462,7 @@ export const openLegacy = {
      * This function can open 1.9 - 1.11 files.
      */
     1.9: (contents) => {
-        Language.set({ // default values
-            Version: '2.0.0',
-            Name: 'Unnamed Language',
-            CaseSensitive: false,
-            IgnoreDiacritics: true,
-            ShowEtymology: false,
-            ShowInflection: false,
-            Inflections: [],
-            UseLects: false,
-            HeaderTags: '',
-            Alphabet: 'a b c d e f g h i j k l m n o p q r s t u v w x y z',
-            Lexicon: <Lexc.Lexicon> { },
-            Etymologies: <Lexc.Etymologies> { },
-            Relatives: { },
-            Pronunciations: <Lexc.Pronunciations> {
-                General: 'place > holder'
-            },
-            Phonotactics: <Lexc.Phonotactics> {
-                General: <Lexc.PhonotacticsLect> {
-                    Onsets: '',
-                    Medials: '',
-                    Codas: '',
-                    Vowels: '',
-                    Illegals: '',
-                }
-            },
-            Lects: ['General'],
-            Phrasebook: <Lexc.Phrasebook> { },
-            Docs: <OutputData> {
-                blocks: [ ]
-            },
-            Diagnostics: <Lexc.Diagnostic[]> [ ]
-        });
+        Language.set(Default);
         try {
             for (const key in contents.Lexicon) {
                 Lang().Lexicon[key] = <Lexc.Word> {

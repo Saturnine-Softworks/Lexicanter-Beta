@@ -2,9 +2,8 @@ import { get, writable, type Writable } from 'svelte/store';
 import EditorJS, { type OutputData } from '@editorjs/editorjs';
 import type * as Lexc from './types'; 
 
-// Initial state for the language data
-export const Language: Writable<Lexc.Language> = writable({
-    Version: '2.0.0',
+const Default: Lexc.Language = {
+    Version: '2.1.0',
     Name: 'Unnamed Language',
     CaseSensitive: false,
     IgnoreDiacritics: true,
@@ -20,7 +19,14 @@ export const Language: Writable<Lexc.Language> = writable({
     Pronunciations: <Lexc.Pronunciations> {
         General: 'place > holder'
     },
-    Orthographies: <Lexc.Orthography[]> [],
+    Orthographies: <Lexc.Orthography[]> [{
+        name: 'Romanization',
+        font: 'Gentium',
+        root: 'rom',
+        lect: 'General',
+        rules: 'Your romanized orthography is the base form of input.',
+        display: true
+    }],
     ShowOrthography: false,
     Phonotactics: <Lexc.Phonotactics> {
         General: <Lexc.PhonotacticsLect> {
@@ -37,7 +43,11 @@ export const Language: Writable<Lexc.Language> = writable({
         blocks: [ ]
     },
     Diagnostics: <Lexc.Diagnostic[]> [ ]
-});
+};
+export const defaultLanguage: Writable<Lexc.Language> = writable(Default);
+
+// Initial state for the language data
+export const Language: Writable<Lexc.Language> = writable(Default);
 
 export const selectedTab = writable(0);
 

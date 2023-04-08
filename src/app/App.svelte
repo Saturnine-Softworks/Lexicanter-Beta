@@ -15,6 +15,7 @@
     import { saveFile } from './utils/files'
     import * as diagnostics from './utils/diagnostics'
     import Inflection from './layouts/Inflection.svelte';
+    import Orthography from './layouts/Orthography.svelte';
     import Wiki from './layouts/Wiki.svelte';
     import Reference from './layouts/Reference.svelte';
 
@@ -23,7 +24,7 @@
         // diagnostics.debug.logObj($Language, 'An update was made to the Language store', false);
     }
 
-    const tabs = [Lexicon, Etymology, Phrasebook, Inflection, Phonology, null, Documentation, File, Settings, Changelog, Wiki]
+    const tabs     = [ Lexicon,   Etymology,   Phrasebook,   Inflection,   Phonology,   Orthography,   Documentation,   File,   Settings,   Changelog, Wiki]
     const tab_btns = ['Lexicon', 'Etymology', 'Phrasebook', 'Inflection', 'Phonology', 'Orthography', 'Documentation', 'File', 'settings', 'history', 'help'];
 
     /**

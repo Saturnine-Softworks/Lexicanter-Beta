@@ -147,7 +147,9 @@ export type Orthography = {
     name: string;
     font: string;
     root: 'rom' | 'ipa';
-    rules: string
+    lect: string;
+    rules: string;
+    display: boolean;
 }
 
 /**
