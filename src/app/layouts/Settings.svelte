@@ -56,7 +56,7 @@
             });
         });
     }
-    
+
     /**
      * When the user clicks the "Choose Custom Theme" button in the Settings tab,
      * this function opens a file picker dialog and allows the user to select
@@ -348,6 +348,9 @@
                         <option value="styles/terminal_green.css">☾ Terminal</option>
                         <option value="styles/midnight.css">☾ Midnight</option>
                         <option value="styles/bone.css">☀ Bone</option>
+                    </optgroup>
+                    <optgroup label="The Holiday Collection">
+                        <option value="styles/eostre2023.css">☀ Ēostre 2023</option>
                     </optgroup>
                 </select>
             </label>
