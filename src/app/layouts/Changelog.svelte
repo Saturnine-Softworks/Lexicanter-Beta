@@ -25,6 +25,20 @@
 
             <br><hr/><br>
 
+            <p><u>Beta 2.1.0</u></p>
+            <p class=narrow>
+                Happy Tanabeta 2.1, everyone. The major new features to test out are as follows. <br>
+                Note: A few features are still planned to be added during the beta period, but they are not yet ready for testing.
+            </p>
+            <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
+                • The new Reference Panel. Accessible from the File tab, this panel allows you to view a second file in read-only mode. <br>
+                • Advanced Settings: Alternate Orthographies. This option gives you access to the Orthography tab, where you can designate alternative
+                orthographies and fonts installed on your system. <br>
+                • Phonological evolution. This feature, accessible from the File tab, allows you to write sound change rules to apply to your entire lexicon. 
+                After saving your file, it creates a new file with the new words, enables the Etymology advanced setting, creates etymology entries linking 
+                the new and old words, and opens the old file in the Reference Panel.
+            <br><br>
+
             <p><u>Patch 2.0.18</u></p>
             <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
                 • By request, added a new dropdown to Tag inputs which allows you to select from pre-existing tags in your lexicon. <br>

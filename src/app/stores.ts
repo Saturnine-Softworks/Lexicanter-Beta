@@ -47,7 +47,7 @@ const Default: Lexc.Language = {
 export const defaultLanguage: Writable<Lexc.Language> = writable(Default);
 
 // Initial state for the language data
-export const Language: Writable<Lexc.Language> = writable(Default);
+export const Language: Writable<Lexc.Language> = writable(structuredClone(Default));
 
 export const selectedTab = writable(0);
 
@@ -76,7 +76,8 @@ export const phrasePronunciations: Writable<PronunciationInputs> = writable((()=
 export const categoryInput = writable('');
 export const selectedCategory = writable('');
 
-export const docsEditor = writable(new EditorJS);
+export const docsEditor: Writable<EditorJS> = writable(new EditorJS({holder: 'docs-tab'}));
+export const refsEditor: Writable<EditorJS> = writable(new EditorJS({holder: 'ref-docs'}));
 
 export const theme = writable('styles/dark.css');
 export const autosave = writable(true);

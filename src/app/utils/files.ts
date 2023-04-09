@@ -47,9 +47,14 @@ export async function showOpenDialog (params, callback: (path: string) => void) 
  * @returns {string} The data to be exported.
  */
 async function collectExportData (): Promise<string> {
-    await get(docsEditor).save().then(data => {
-        Lang().Docs = data;
-    });
+    if (typeof get(docsEditor).save === 'function') {
+        console.log('Save function found for docs editor.', get(docsEditor));
+        await get(docsEditor).save().then(data => {
+            Lang().Docs = data;
+        });
+    } else {
+        console.log('No save function found for docs editor.', get(docsEditor));
+    }
     Lang().Version = await ipcRenderer.invoke('getVersion');
     return JSON.stringify(Lang());
 }

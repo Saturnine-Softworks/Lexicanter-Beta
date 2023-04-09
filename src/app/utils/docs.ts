@@ -1,4 +1,4 @@
-import { docsEditor } from '../stores';
+import { docsEditor, refsEditor } from '../stores';
 import EditorJS, { type OutputData } from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import Paragraph from '@editorjs/paragraph';
@@ -140,5 +140,10 @@ export function initializeDocs(data: OutputData | false, holder='docs-tab'): voi
     };
     
     if (data) config.data = data;
-    docsEditor.set(new EditorJS(config));
+    const editor = new EditorJS(config);
+    if (holder === 'docs-tab') {
+        docsEditor.set(editor);
+    } else if (holder === 'ref-docs') {
+        refsEditor.set(editor);
+    }
 }

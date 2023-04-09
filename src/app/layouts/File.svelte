@@ -1,13 +1,14 @@
 <script lang="ts">
     const fs = require('fs');
     const path = require('path');
-    import { docsEditor, Language, selectedCategory, fileLoadIncrement, referenceLanguage } from '../stores';
+    import { docsEditor, Language, selectedCategory, fileLoadIncrement, referenceLanguage, defaultLanguage } from '../stores';
     import type { OutputData } from '@editorjs/editorjs';
     import type * as Lexc from '../types';
     import { userData, showOpenDialog, saveFile, openLegacy, saveAs, importCSV } from '../utils/files';
     import { writeRomans } from '../utils/phonetics';
     import { initializeDocs } from '../utils/docs';
     import * as diagnostics from '../utils/diagnostics';
+    import Evolver from '../components/Evolver.svelte';
     const vex = require('vex-js');
     $: loading_message = '';
     let csv = {
@@ -20,7 +21,6 @@
         tags: 4,
     }
     $: csv;
-    let oldPattern = ''; let newPattern = '';
 
     /**
      * Parses the contents of an opened .lexc file and loads the data into the app.
@@ -31,8 +31,7 @@
         if (typeof contents.Version === 'number' || contents.Version === '1.8.x') {
             try { openLegacy[contents.Version](contents); }
             catch (err) {
-                // TODO: window.alert() freezes text inputs on Windows computers and all instances need to be replaced with a custom dialog.
-                window.alert(` 
+                vex.dialog.alert(` 
                     The file you attempted to open was saved by an old version of Lexicanter (Version ~${contents.Version}), 
                     which is no longer supported. Please contact the developer for assistance; the file is likely recoverable.
                 `);
@@ -41,6 +40,9 @@
         }
         let errorMessage: string;
         try {
+            // clear language data
+            $Language = structuredClone($defaultLanguage);
+
             errorMessage = 'There was a problem loading the settings of the file.'
             $Language.CaseSensitive = contents.CaseSensitive;
             $Language.IgnoreDiacritics = contents.IgnoreDiacritics;
@@ -196,33 +198,6 @@
         window.setTimeout(() => { loading_message = ''; }, 5000);
     }
 
-    /**
-     * This function is used to change the a given orthograph
-     * to a new one, throughout the lexicon. 
-     */
-    function change_orthography() {
-        oldPattern = oldPattern.replace(/\^/g, '÷');
-        newPattern = newPattern.replace(/\^/g, '÷');
-        for (let word in $Language.Lexicon) {
-            let w = '÷' + word + '÷';
-            if (w.includes($Language.CaseSensitive? oldPattern : oldPattern.toLowerCase())) {
-                let r = new RegExp(oldPattern, $Language.CaseSensitive ? 'g' : 'gi');
-                w = w.replace(r, newPattern);
-                w = w.replace(/÷/gi, '');
-                if (w in $Language.Lexicon) {
-                    // if the new word exists, conjoin the definitions
-                    $Language.Lexicon[w][1] = $Language.Lexicon[w][1] + '\n' + $Language.Lexicon[word][1];
-                } else {
-                    $Language.Lexicon[w] = $Language.Lexicon[word];
-                }
-                delete $Language.Lexicon[word];
-            }
-        }
-        $Language.Lects.forEach(writeRomans); 
-        $Language = {...$Language};
-        oldPattern = ''; newPattern = '';
-    }
-
     async function openReferenceFile() {
         let contents;
         let dialog = (userPath: string) => {
@@ -330,14 +305,8 @@
                 <button on:click={()=>$referenceLanguage = false} class="hover-highlight hover-shadow">Close Reference File</button>
             {/if}
             <br>
-            <p>Change Pronunciations & Orthography</p>
-            <div class="narrow">
-                <label for="ortho-pattern">Orthography Pattern</label>
-                <input id="ortho-pattern" type="text" bind:value={oldPattern}/>
-                <label for="new-pattern">Replace With</label>
-                <input id="new-pattern" type="text" bind:value={newPattern}/>
-                <button class="hover-highlight hover-shadow" on:click={change_orthography}>Commit Change</button>
-            </div>
+            <p>Evolve Language</p>
+            <Evolver/>
             <br>
             <p>Export Lexicon</p>
             <p>HTML</p>

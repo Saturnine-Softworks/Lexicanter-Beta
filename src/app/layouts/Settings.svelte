@@ -56,16 +56,7 @@
             });
         });
     }
-
-    /**
-     * Orthography checkboxes have to do some tests before allowing their state to be toggled, so their default behaviour is prevented and
-     * must be handled manually.
-     */
-    function toggleChecked(event) {
-        const target = event.target as HTMLInputElement;
-        target.checked = !target.checked;
-    }
-
+    
     /**
      * When the user clicks the "Choose Custom Theme" button in the Settings tab,
      * this function opens a file picker dialog and allows the user to select
