@@ -25,7 +25,7 @@
 
             <br><hr/><br>
 
-            <p><u>Beta 2.1.0</u></p>
+            <p><u>Beta 2.1.1</u></p>
             <p class=narrow>
                 Happy Tanabeta 2.1, everyone. The major new features to test out are as follows. <br>
                 Note: A few features are still planned to be added during the beta period, but they are not yet ready for testing.

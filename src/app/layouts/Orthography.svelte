@@ -3,6 +3,7 @@
     import { parseRules, applyRules } from "../utils/sca";
     let selectedOrtho = '';
     let testInput = '';
+    const vex = require('vex-js');
 
     /**
      * Binding directly to the Language store seems to be very slow, so this function is used to
@@ -13,7 +14,22 @@
      */
     function setAttribute(event: Event, attribute: string, index: number) {
         const target = event.target as HTMLInputElement;
-        $Language.Orthographies[index][attribute] = target.value;
+        const value = target.value.trim();
+
+        if (attribute === 'name') {
+            if ([value, ...$Language.Orthographies.filter(o => o.name === value)].length-1 > 1) {
+                vex.dialog.alert('The name must be unique.');
+                target.value = `New Orthography ${index}`;
+                return;
+            }
+            if (value === '') {
+                vex.dialog.alert('The name cannot be blank.');
+                target.value = `New Orthography ${index}`;
+                return;
+            }
+        }
+
+        $Language.Orthographies[index][attribute] = value;
     }
 </script>
 <div class=tab-pane>
@@ -27,6 +43,7 @@
                             setAttribute(e, 'name', i);
                         }}
                         style:background-color={orthography.name === 'Romanization' ? 'transparent' : ''}
+                        value={orthography.name}
                         readonly={orthography.name==='Romanization'}
                     />
                 </label>
@@ -36,6 +53,7 @@
                             setAttribute(e, 'font', i);
                         }}
                         style:background-color={orthography.name === 'Romanization' ? 'transparent' : ''}
+                        value={orthography.font}
                         readonly={orthography.name==='Romanization'}
                     />
                 </label>
@@ -66,6 +84,7 @@
                             setAttribute(e, 'rules', i);
                         }}
                         style:background-color={orthography.name === 'Romanization' ? 'transparent' : ''}
+                        value={orthography.rules}
                         readonly={orthography.name === 'Romanization'}
                     />
                 </label>
@@ -88,7 +107,7 @@
                     $Language.Orthographies = [
                         ...$Language.Orthographies,
                         {
-                            name: 'New Orthography',
+                            name: `New Orthography ${$Language.Orthographies.length}`,
                             font: 'Gentium',
                             root: 'ipa',
                             lect: $Language.Lects[0],
