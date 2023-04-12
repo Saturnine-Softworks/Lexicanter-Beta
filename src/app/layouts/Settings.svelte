@@ -10,6 +10,10 @@
     import { get_pronunciation } from '../utils/phonetics';
     import Etymology from './Etymology.svelte';
     import Orthography from './Orthography.svelte';
+    import TagSelector from '../components/TagSelector.svelte';
+
+    let tag: string = '';
+
     /**
      * When the app loads, this block runs to check if the user has
      * previously set a theme preference. If not, it creates a file in the
@@ -362,6 +366,44 @@
             <p>Save Settings</p> <br>
             <label>Auto-Save
                 <input type="checkbox" bind:checked={$autosave} on:change={change_autosave_pref}/>
+            </label>
+
+            <br><hr/><br>
+
+            <p>Lexicon Settings</p> <br>
+            <label>Manage Tags<br>
+                <TagSelector on:select={e => tag = e.detail? e.detail.trim() : ''}/>
+                <p>Selected: {tag}</p>
+                {#if !!tag}
+                    <button class="hover-highlight hover-shadow" on:click={()=>{
+                        Object.keys($Language.Lexicon).forEach(word => {
+                            $Language.Lexicon[word].Senses.forEach((sense, i) => {
+                                if (sense.tags.includes(tag)) {
+                                    $Language.Lexicon[word].Senses[i].tags.splice(sense.tags.indexOf(tag), 1);
+                                }
+                            });
+                        });
+                        tag = '';
+                    }}>Delete Tag</button>
+                    <button class="hover-highlight hover-shadow" on:click={()=>{
+                        vex.dialog.prompt({
+                            message: 'New tag name:',
+                            callback: (newName) => {
+                                if (newName) {
+                                    Object.keys($Language.Lexicon).forEach(word => {
+                                        $Language.Lexicon[word].Senses.forEach((sense, i) => {
+                                            if (sense.tags.includes(tag)) {
+                                                $Language.Lexicon[word].Senses[i].tags.splice(sense.tags.indexOf(tag), 1);
+                                                $Language.Lexicon[word].Senses[i].tags.push(newName);
+                                            }
+                                        });
+                                    });
+                                    tag = newName;
+                                }
+                            }
+                        });
+                    }}>Edit Tag</button>
+                {/if}
             </label>
 
             <br><hr/><br>

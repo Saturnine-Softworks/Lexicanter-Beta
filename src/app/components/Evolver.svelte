@@ -42,65 +42,69 @@
         </label>
         <button class='hover-highlight hover-shadow'
             on:click={() => {
-                if (newName === $Language.Name) vex.dialog.alert('The new language must have a different name.')
-                saveFile();
-
-                const newLanguage = structuredClone($defaultLanguage);
-                newLanguage.Name = newName;
-                newLanguage.ShowEtymology = true;
-                Object.keys($Language.Lexicon).forEach(word => {
-                    let baseWord = structuredClone(word);
-                    if (usePronunciations) {
-                        if (!$Language.Lexicon[word].pronunciations.hasOwnProperty(baseLect)) return;
-                        else baseWord = $Language.Lexicon[word].pronunciations[baseLect].ipa;
-                    }
-                    const newWord = soundChange(baseWord);
-                    newLanguage.Lexicon[newWord] = structuredClone($Language.Lexicon[word]);
-                    
-                    // Clean up the new entry
-                    newLanguage.Lexicon[newWord].pronunciations = {General: {ipa: newWord, irregular: false}};
-                    newLanguage.Lexicon[newWord].Senses.forEach(sense => {sense.lects = ['General']});
-
-                    // SECTION Etymology
-
-                    // Store the lexicon of the current language as a relative
-                    newLanguage.Relatives[$Language.Name] = structuredClone($Language.Lexicon);
-                    
-                    // Create entries for each lexicon entry and codify the language name for existing entries
-                    if ($Language.Etymologies[word]) {
-                        newLanguage.Etymologies[word] = $Language.Etymologies[word];
-                        newLanguage.Etymologies[word].source = $Language.Name;
-                        newLanguage.Etymologies[word].descendants.forEach(descendant => {
-                            if (descendant.source === '<< THIS LANGUAGE >>') 
-                                descendant.source = $Language.Name;
-                        });
-                    } else {
-                        newLanguage.Etymologies[word] = {
-                            descendants: [], 
-                            source: $Language.Name
+                if (newName === $Language.Name) {
+                    vex.dialog.alert('The new language must have a different name.');
+                    return;
+                }
+                saveFile().then(() => {
+                    // Open the old language in the reference panel
+                    if ($referenceLanguage) $referenceLanguage = false;
+                    $referenceLanguage = structuredClone($Language);
+    
+                    const newLanguage = structuredClone($defaultLanguage);
+                    newLanguage.Name = newName;
+                    newLanguage.ShowEtymology = true;
+                    Object.keys($Language.Lexicon).forEach(word => {
+                        let baseWord = `${word}`;
+                        if (usePronunciations) {
+                            if (!$Language.Lexicon[word].pronunciations.hasOwnProperty(baseLect)) return;
+                            else baseWord = $Language.Lexicon[word].pronunciations[baseLect].ipa;
+                        }
+                        const newWord = soundChange(baseWord);
+                        newLanguage.Lexicon[newWord] = structuredClone($Language.Lexicon[word]);
+                        
+                        // Clean up the new entry
+                        newLanguage.Lexicon[newWord].pronunciations = {General: {ipa: newWord, irregular: false}};
+                        newLanguage.Lexicon[newWord].Senses.forEach(sense => {sense.lects = ['General']});
+    
+                        // SECTION Etymology
+    
+                        // Store the lexicon of the current language as a relative
+                        newLanguage.Relatives[$Language.Name] = structuredClone($Language.Lexicon);
+                        
+                        // Create entries for each lexicon entry and codify the language name for existing entries
+                        if ($Language.Etymologies[word]) {
+                            newLanguage.Etymologies[word] = $Language.Etymologies[word];
+                            newLanguage.Etymologies[word].source = $Language.Name;
+                            newLanguage.Etymologies[word].descendants.forEach(descendant => {
+                                if (descendant.source === '<< THIS LANGUAGE >>') 
+                                    descendant.source = $Language.Name;
+                            });
+                        } else {
+                            newLanguage.Etymologies[word] = {
+                                descendants: [], 
+                                source: $Language.Name
+                            };
+                        }
+    
+                        // Write an entry for the new word
+                        newLanguage.Etymologies[newWord] = {
+                            descendants: [ ],
+                            source: '<< THIS LANGUAGE >>'
                         };
-                    }
-
-                    // Write an entry for the new word
-                    newLanguage.Etymologies[newWord] = {
-                        descendants: [ ],
-                        source: '<< THIS LANGUAGE >>'
-                    };
-
-                    // Add the new word to the descendants of the old word
-                    newLanguage.Etymologies[word].descendants.push({
-                        name: newWord,
-                        source: '<< THIS LANGUAGE >>' 
+    
+                        // Add the new word to the descendants of the old word
+                        newLanguage.Etymologies[word].descendants.push({
+                            name: newWord,
+                            source: '<< THIS LANGUAGE >>' 
+                        });
                     });
+    
+                    $docsEditor.destroy(); initializeDocs(false);
+                    $Language = newLanguage;
+    
+                    saveFile();
                 });
-                // Open the old language in the reference panel
-                if ($referenceLanguage) $referenceLanguage = false;
-                window.setTimeout(() =>  $referenceLanguage = structuredClone($Language), 100);
-
-                $docsEditor.destroy(); initializeDocs(false);
-                $Language = newLanguage;
-
-                saveFile();
             }}
         >Save File and Evolve Lexicon</button>
     </div>

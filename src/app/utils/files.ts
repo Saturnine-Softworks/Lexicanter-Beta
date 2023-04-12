@@ -133,12 +133,12 @@ export async function saveFile () {
                 );
             });
             if (!get(autosave)) {
-                vex.dialog.alert('The file has been saved.');
+                vex.dialog.alert(`The ${Lang().Name} file has been saved.`);
             } else {
                 new Notification(`The ${Lang().Name} file has been auto-saved.`);
             }
         } catch (err) {
-            window.alert(
+            vex.dialog.alert(
                 'There was a problem saving your file. Please contact the developer.'
             );
             console.log(err);

@@ -60,7 +60,7 @@
                 <!-- svelte-ignore a11y-label-has-associated-control -->
                 <label>Root
                     {#if orthography.name === 'Romanization'}
-                        <p>: Base input</p>
+                        <span>: Base input</span>
                     {:else}
                         <select bind:value={orthography.root}>
                             <option value=ipa>Base from pronunciation</option>
@@ -79,7 +79,9 @@
                 {/if}
                 <br>
                 <label>Conversion Rules
-                    <textarea 
+                    <textarea
+                        rows=3
+                        class={orthography.name === 'Romanization'? 'text-center' : 'text-left'}
                         on:blur={(e) => {
                             setAttribute(e, 'rules', i);
                         }}

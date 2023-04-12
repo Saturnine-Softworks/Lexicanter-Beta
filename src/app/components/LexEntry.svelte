@@ -1,13 +1,14 @@
+<svelte:options immutable/>
 <script lang="ts">
-    import { Language, pronunciations } from '../stores';
+    import { Language } from '../stores';
     import type { Word } from '../types';
     import { createEventDispatcher } from 'svelte';
-    import { blur } from 'svelte/transition';
     import Pronunciations from './Pronunciations.svelte';
-    import Inflections from '../components/Inflections.svelte';
+    import Inflections from './Inflections.svelte';
     import { markdownToHtml } from '../utils/markdown';
     import { debug } from '../utils/diagnostics';
     import { applyRules, parseRules } from '../utils/sca';
+    import EntryLabel from './EntryLabel.svelte';
     const dispatch = createEventDispatcher();
     const edit = () => dispatch('edit')
     export let word: string;
@@ -63,18 +64,7 @@
     }
 </script>
 <div id='{word}' class="lex-entry prelined" on:contextmenu={edit}>
-    {#if $Language.Orthographies.find(o => o.name === 'Romanization').display}
-        <p style="font-style: italic">{word}</p>
-    {/if}
-    {#each $Language.Orthographies as ortho}
-        {#if ortho.name !== 'Romanization' && ortho.display && (ortho.root === 'rom' || (ortho.lect in source.pronunciations))}
-            <p style:font-family={$Language.Orthographies.find(o => o.name === ortho.name).font}
-            >{(()=>{
-                const settings = parseRules($Language.Orthographies.find(o => o.name === ortho.name).rules);
-                return applyRules(settings.rules, ortho.root === 'rom'? word : source.pronunciations[ortho.lect].ipa, settings.categories);
-            })()}</p>
-        {/if}
-    {/each}
+    <EntryLabel {word} {source} />
     <Pronunciations pronunciations={ source.pronunciations }/>
     {#each source.Senses as Sense, i}
         {#if source.Senses.length > 1} 

@@ -25,7 +25,8 @@
 
     let alphabetized: string[];
     $: { // Update the alphabetized lexicon when conditions change
-        $Language.Lexicon; 
+        $Language; 
+        $Language.Lexicon; $Language.Pronunciations;
         $Language.ShowEtymology; $Language.Etymologies; 
         $Language.ShowInflection; $Language.Inflections; 
         $Language.Alphabet; $Language.Orthographies;

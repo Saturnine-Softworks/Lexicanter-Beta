@@ -235,6 +235,19 @@
                             return;
                         }
                         contents = JSON.parse(data) as Lexc.Language;
+                        if (String(contents.Version).split('.')[0] !== '2') {
+                            vex.dialog.alert(
+                                `The file you are attempting to open as a reference was last saved in v${contents.Version} \
+                                and is not compatible with the current version. Contact the developer for assistance.`
+                            );
+                            document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
+                                // loading anim stop
+                                planet.style.animationPlayState = 'paused';
+                            });
+                            loading_message = 'Incompatible file.';
+                            window.setTimeout(() => { loading_message = ''; }, 5000);
+                            return;
+                        }
                         if (contents.Name === $Language.Name){
                             vex.dialog.alert('You cannot open a reference to the same language.');
                             document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
@@ -244,12 +257,11 @@
                             loading_message = 'Same language.';
                             window.setTimeout(() => { loading_message = ''; }, 5000);
                             return;
-                        } else {
-                            $referenceLanguage = false;
-                            window.setTimeout(() => {
-                                $referenceLanguage = contents;
-                            }, 100);
-                        };
+                        }
+                        $referenceLanguage = false;
+                        window.setTimeout(() => {
+                            $referenceLanguage = contents;
+                        }, 100);
                     });
                 }
             );
@@ -303,6 +315,18 @@
             {#if typeof $referenceLanguage === 'object'}
                 <p>Reference Language: {$referenceLanguage.Name}</p>
                 <button on:click={()=>$referenceLanguage = false} class="hover-highlight hover-shadow">Close Reference File</button>
+                {#if $Language.ShowEtymology}
+                    <button on:click={() => {
+                        if (typeof $referenceLanguage === 'object') { // redundant check is necessary for linter
+                            if ($referenceLanguage.Name in $Language.Relatives) {
+                                vex.dialog.alert(`There is already a relative lexicon with the name ${$referenceLanguage.Name}.`);
+                                return;
+                            }
+                            $Language.Relatives[$referenceLanguage.Name] = $referenceLanguage.Lexicon;
+                            vex.dialog.alert(`Successfully imported ${$referenceLanguage.Name} as a relative lexicon.`);
+                        }
+                    }}>Import Reference Lexicon as Related Lexicon</button>
+                {/if}
             {/if}
             <br>
             <p>Evolve Language</p>

@@ -2,6 +2,18 @@
     import { Language } from "../stores";
     import { get_pronunciation, writeRomans, complete_word, generate_word } from '../utils/phonetics'
     let trial = ''; let ortho_test = '';
+    function setInStone (event: Event) {
+        const target = event.target as HTMLInputElement;
+        const value = target.value.trim();
+        const {[selectedLect]: _, ...rest} = $Language.Pronunciations;
+        $Language.Pronunciations = {
+            ...rest,
+            [selectedLect]: value
+        }
+    }
+    function updatePhonologyInput () {
+        (document.getElementById('pronunciations-input') as HTMLInputElement).value = $Language.Pronunciations[selectedLect];
+    }
     $: trial_completion = complete_word(trial);
     let selectedLect: string = $Language.Lects[0];
     $: {
@@ -57,15 +69,18 @@
         <div class="container column scrolled" style="height: 100%">
             <label>Pronunciations
                 {#if $Language.UseLects}    
-                    <select bind:value={selectedLect}>
+                    <select bind:value={selectedLect} on:change={updatePhonologyInput}>
                         {#each $Language.Lects as lect}
                             <option value={lect}>{lect}</option>
                         {/each}
                     </select>
                 {/if}
-                <textarea class="prelined" rows="24" style="text-align: left" 
-                    on:blur={() => writeRomans(selectedLect)}
-                    bind:value={$Language.Pronunciations[selectedLect]}
+                <textarea class="prelined" rows="24" style="text-align: left" id="pronunciations-input"
+                    value={$Language.Pronunciations[selectedLect]}
+                    on:blur={e => {
+                        setInStone(e); // binding directly to the store is very slow when the language is large
+                        writeRomans(selectedLect);
+                    }}
                 />
             </label>
             <br><br>
