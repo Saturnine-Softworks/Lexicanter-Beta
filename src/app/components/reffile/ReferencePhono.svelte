@@ -5,8 +5,6 @@
     let Language = $referenceLanguage as Language;
     $: Language = $referenceLanguage as Language;
     let selectedLect = Language.Lects[0];
-    $: { Language;
-         selectedLect = Language.Lects[0]; }
     let testString = '';
 </script>
 <div class='scrolled' style='height: 100%'>

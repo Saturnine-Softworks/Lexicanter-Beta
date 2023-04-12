@@ -46,7 +46,8 @@
                     vex.dialog.alert('The new language must have a different name.');
                     return;
                 }
-                saveFile().then(() => {
+                saveFile();
+                window.setTimeout(() =>{
                     // Open the old language in the reference panel
                     if ($referenceLanguage) $referenceLanguage = false;
                     $referenceLanguage = structuredClone($Language);
@@ -104,7 +105,7 @@
                     $Language = newLanguage;
     
                     saveFile();
-                });
+                }, 333);
             }}
         >Save File and Evolve Lexicon</button>
     </div>

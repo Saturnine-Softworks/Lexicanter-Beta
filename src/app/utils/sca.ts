@@ -224,6 +224,7 @@ function applyRule(rule: string, input: string, categories: {[index: string]: st
     ); */
     return result
         .replaceAll(nullRule, '')
+        .replaceAll('␠', ' ')
         .trim();
 }
 
