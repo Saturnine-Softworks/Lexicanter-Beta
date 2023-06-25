@@ -28,7 +28,7 @@
             <p><u>Beta 2.1</u></p>
             <p class=narrow>
                 Happy Tanabeta 2.1, everyone. The major new features to test out are as follows. <br>
-                Note: A few features are still planned to be added during the beta period, but they are not yet ready for testing.
+                Note: A few features are still planned to be added during the beta period, but they are not yet ready for testing. <br>
             </p>
             <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
                 • The new Reference Panel. Accessible from the File tab, this panel allows you to view a second file in read-only mode. <br>
@@ -36,7 +36,12 @@
                 orthographies and fonts installed on your system. <br>
                 • Phonological evolution. This feature, accessible from the File tab, allows you to write sound change rules to apply to your entire lexicon. 
                 After saving your file, it creates a new file with the new words, enables the Etymology advanced setting, creates etymology entries linking 
-                the new and old words, and opens the old file in the Reference Panel.
+                the new and old words, and opens the old file in the Reference Panel.<br><br>
+                <u>β2.1.4</u>
+                <br> Hi. It's been a minute. About time for some bug fixes. Bear with me while I re-learn the codebase: all of these are small fixes and additions, but I'll be back to the larger issues <i>soon</i>™.<br>
+                • Fixed an issue with the dropdown tag selector reported by a couple of people which caused them to break the tag search field. <br>
+                • Fixed <i>another</i> issue with the dropdown selector which caused it to overwrite manually typed tags. <br>
+                • Added a requested setting: you can now hide the pronunciations in the entry displays.
             <br><br>
 
             <p><u>Patch 2.0.18</u></p>

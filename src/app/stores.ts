@@ -28,6 +28,7 @@ const Default: Lexc.Language = {
         display: true
     }],
     ShowOrthography: false,
+    ShowPronunciation: true,
     Phonotactics: <Lexc.Phonotactics> {
         General: <Lexc.PhonotacticsLect> {
             Onsets: '',

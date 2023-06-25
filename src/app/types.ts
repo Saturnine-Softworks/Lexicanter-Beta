@@ -192,6 +192,7 @@ export type Language = {
     Alphabet: string;
     Pronunciations: Pronunciations;
     Orthographies: Orthography[];
+    ShowPronunciation: boolean;
     ShowOrthography: boolean;
     Phonotactics: Phonotactics;
     Lects: string[];

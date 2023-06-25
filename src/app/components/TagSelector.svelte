@@ -9,7 +9,7 @@
 </script>
 <select bind:value={tagSelector} on:change={() => 
     {
-        tag = tagSelector === 'existing tags'? '' : ` ${tagSelector}`;
+        tag = tagSelector === 'existing tags'? '' : `${tagSelector}`;
         add();
         tagSelector = 'existing tags';
     }}

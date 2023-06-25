@@ -52,7 +52,13 @@
                 rows="1"
                 bind:value={tags}
             />  
-            <TagSelector on:select={e => tags += e.detail? e.detail : '' } />
+            <TagSelector on:select = {
+                e => tags += e.detail
+                    ? tags
+                        ? ' ' + e.detail
+                        : e.detail
+                    : '' 
+            }/>
         </div>
     </label>
     <br>

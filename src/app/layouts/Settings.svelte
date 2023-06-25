@@ -481,6 +481,9 @@
                     }}> + Lect </button>
                 {/if}
             </label>
+            <label>Show Pronunciations
+                <input type="checkbox" bind:checked={$Language.ShowPronunciation}/>
+            </label>
             <br><br>
             <label>Show Etymology Features
                 <input type="checkbox" bind:checked={$Language.ShowEtymology}/>
