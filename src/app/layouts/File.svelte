@@ -5,10 +5,11 @@
     import type { OutputData } from '@editorjs/editorjs';
     import type * as Lexc from '../types';
     import { userData, showOpenDialog, saveFile, openLegacy, saveAs, importCSV } from '../utils/files';
-    import { writeRomans } from '../utils/phonetics';
+    import { get_pronunciation, writeRomans } from '../utils/phonetics';
     import { initializeDocs } from '../utils/docs';
     import * as diagnostics from '../utils/diagnostics';
     import Evolver from '../components/Evolver.svelte';
+    import type { Sense } from '../types';
     const vex = require('vex-js');
     $: loading_message = '';
     let csv = {
@@ -21,6 +22,8 @@
         tags: 4,
     }
     $: csv;
+    let plainTextImport = '';
+    $: plainTextImport;
 
     /**
      * Parses the contents of an opened .lexc file and loads the data into the app.
@@ -197,6 +200,70 @@
         });
         loading_message = 'Done!';
         window.setTimeout(() => { loading_message = ''; }, 5000);
+    }
+
+    function importPlainText(plainText: string) {
+        /**
+         * Format:
+         * word
+         * optional pronunciation
+         * 1. numbered definitions
+         * Tags: optional, space separated tags
+         * 2. numbered definitions
+         * Tags: optional, space separated tags
+         * 
+         * etc.
+         */
+        let plainTextEntries = plainTextImport.split('\n\n');
+        for (let entry of plainTextEntries) {
+            let lines = entry.split('\n');
+            let senses = []; let tags = [];
+            let word = lines[0].trim(); lines.shift();
+            let pronunciation = '';
+            if (!lines[0].match(/^[0-9]+\./g)) {
+                pronunciation = lines[0].trim(); lines.shift();
+                if (pronunciation.match(/^[\/\[].+[\/\]]$/)) {
+                    pronunciation = pronunciation.slice(1, pronunciation.length - 1);
+                }
+            }
+            for (let line of lines) {
+                if (line.match(/^[0-9]+\./g)) {
+                    senses.push(line);
+                    if (lines[lines.indexOf(line) + 1].startsWith('Tags: ')) {
+                        tags.push(lines[lines.indexOf(line) + 1].slice(6).split(/\s+/g));
+                    } else {
+                        tags.push([]);
+                    }
+                }
+            }
+            let sensesEntry: Sense[] = [];
+            for (let sense of senses) {
+                sensesEntry.push({
+                    'definition': sense.slice(sense.indexOf('.') + 1).trim(),
+                    'tags': tags[senses.indexOf(sense)],
+                    'lects': $Language.Lects,
+                })
+            }
+            let pronunciations = {}
+            pronunciations[$Language.Lects[0]] = pronunciation? {
+                'ipa': pronunciation,
+                'irregular': true,
+            } : {
+                'ipa': get_pronunciation(word, $Language.Lects[0]),
+                'irregular': false,
+            }
+            let wordEntry = {
+                'pronunciations': pronunciations,
+                'Senses': sensesEntry
+            }
+            
+            if (word in $Language.Lexicon) {
+                vex.dialog.alert(`The word ${word} is already in the lexicon.`);
+            } else {
+                $Language.Lexicon[word] = wordEntry;
+            }
+        }
+        plainTextImport = '';
     }
 
     async function openReferenceFile() {
@@ -393,6 +460,16 @@
                     csv.tags_bool? csv.tags : false
                 )
             } class="hover-highlight hover-shadow">Import</button>
+            <br>
+            <p>Import Lexicon from Plain Text</p>
+            <p class="info">Check the Help tab to read about the plain text format Lexicanter can convert into lexicon entries.</p>
+            <div class="narrow">
+                <textarea bind:value={plainTextImport} class='text-left' rows=6></textarea>
+                <button class="hover-highlight hover-shadow" on:click={()=>{
+                    importPlainText(plainTextImport);
+                    plainTextImport = '';
+                }}>Import</button>
+            </div>
             <br><br>
         </div>
     </div>

@@ -41,7 +41,14 @@
                 <br> Hi. It's been a minute. About time for some bug fixes. Bear with me while I re-learn the codebase: all of these are small fixes and additions, but I'll be back to the larger issues <i>soon</i>™.<br>
                 • Fixed an issue with the dropdown tag selector reported by a couple of people which caused them to break the tag search field. <br>
                 • Fixed <i>another</i> issue with the dropdown selector which caused it to overwrite manually typed tags. <br>
-                • Added a requested setting: you can now hide the pronunciations in the entry displays.
+                • Added a requested setting: you can now hide the pronunciations in the entry displays. <br>
+
+                <u>β2.1.5</u> <br>
+                • Re-implemented a removed feature by request: orthography replacement. In the optional Orthography tab, you can now replace an orthography with a new string. <br>
+
+                <u>β2.1.6</u> <br>
+                • Added a new Import Plain Text feature to the File tab. Paste a special plain text format for lexicon entries there to have them brought into the app. More info will soon be added to the Help tab; for now, refer to the discord. <br>
+                • Lexicon entry layout tweaks to hopefully improve quality of life. 
             <br><br>
 
             <p><u>Patch 2.0.18</u></p>
@@ -70,7 +77,7 @@
                 • Fixed CSV export. <br>
                 • Fixed a reported bug with HTML export. <br>
                 • Fixed some reported and unreported issues with the sound change engine. <br>
-                • There is now a text input designated for specifying categories for sound changes in an inflection group, to make everyone's life easier.
+                • There is now a text input designated for specifying categories for sound changes in an inflection group, to make everyone's life easier. <br>
                 • Minor optimizations and performance improvements.
             <br><br>
             </p>

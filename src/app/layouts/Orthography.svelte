@@ -5,6 +5,12 @@
     let testInput = '';
     const vex = require('vex-js');
 
+    let orthographyReplacement = {
+        pattern: '',
+        replacement: ''
+    };
+    let orthographyChangeEndMessage = '';
+
     /**
      * Binding directly to the Language store seems to be very slow, so this function is used to
      * update the store when the user clicks out of an input field.
@@ -120,7 +126,7 @@
                 }}
             >New Orthography</button>
         </div>
-        <div class="column container" style:height=92vh>
+        <div class="column container scrolled" style:height=92vh>
             <select bind:value={selectedOrtho}>
                 {#each $Language.Orthographies as orthography}
                     <option value={orthography.name}>{orthography.name}</option>
@@ -139,6 +145,37 @@
                     readonly
                 />
             </label>
+            <br>
+            <label>Change Orthography
+                <div class="narrow">
+                    Pattern: <input type='text' bind:value={orthographyReplacement.pattern}/>
+                    Replacement: <input type='text' bind:value={orthographyReplacement.replacement}/>
+                    <button on:click={
+                        () => {
+                            for (let word in $Language.Lexicon) {
+                                if (word.includes(orthographyReplacement.pattern)) {
+                                    try { 
+                                        $Language.Lexicon[word.replace(orthographyReplacement.pattern, orthographyReplacement.replacement)] = $Language.Lexicon[word];
+                                        delete $Language.Lexicon[word];
+                                        orthographyChangeEndMessage = 'Change applied successfully.';
+                                        window.setTimeout(() => {
+                                            orthographyChangeEndMessage = '';
+                                        }, 15000);
+                                    } catch (e) {
+                                        console.log(e);
+                                        orthographyChangeEndMessage = 'An error occurred while applying the change. Please contact the developer for assistance and check the console.';
+                                        window.setTimeout(() => {
+                                            orthographyChangeEndMessage = '';
+                                        }, 30000);
+                                    }
+                                }
+                            }
+                        }
+                    }>Apply</button>
+                    <span style:color=red>{orthographyChangeEndMessage}</span>
+                </div>
+            </label>
+
         </div>
     </div>
 </div>

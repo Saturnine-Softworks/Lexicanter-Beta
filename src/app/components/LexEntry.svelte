@@ -80,13 +80,13 @@
                 {Sense.lects.join(', ')}
             </p>
         {/if}
-        <p>{@html markdownToHtml(Sense.definition)}</p>
-        {#if $Language.ShowEtymology && !!entryAncestors && showEtymology}
-            <hr />
-            <p class="lex-body"><i>{entryAncestors}</i></p>
-        {/if}
+        <p style='margin-bottom: -1em'>{@html markdownToHtml(Sense.definition)}</p>
         {#if $Language.ShowInflection || showInflections}
             <Inflections {word} tags={Sense.tags} readFromReference={showInflections}/>
+        {/if}
+        {#if $Language.ShowEtymology && !!entryAncestors && showEtymology}
+            <div class='tag-item'>etymology</div>
+            <p class="lex-body"><i>{entryAncestors}</i></p>
         {/if}
     {/each}
 </div>
