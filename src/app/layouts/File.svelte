@@ -53,7 +53,9 @@
             $Language.UseLects = contents.UseLects;
             $Language.ShowEtymology = contents.ShowEtymology;
             $Language.ShowInflection = contents.ShowInflection;
-            $Language.ShowPronunciation = contents.ShowPronunciation;
+            if (!!contents.ShowPronunciation) {
+                $Language.ShowPronunciation = contents.ShowPronunciation;
+            }
 
             errorMessage = 'There was a problem loading the alphabet from the file.'
             $Language.Alphabet = contents.Alphabet;
@@ -77,7 +79,7 @@
             $Language.Lects.forEach(writeRomans);
 
             errorMessage = 'There was a problem loading the orthography data from the file.'
-            if (contents.Orthographies) {
+            if (!!contents.Orthographies) {
                 $Language.Orthographies = contents.Orthographies;
                 $Language.ShowOrthography = contents.ShowOrthography;
             }
@@ -92,6 +94,17 @@
 
             errorMessage = 'There was a problem loading the etymology data from the file.'
             $Language.Etymologies = contents.Etymologies;
+
+            errorMessage = 'There was a problem loading the advanced phonotactics.';
+            if (!!contents.AdvancedPhonotactics) {
+                $Language.UseAdvancedPhonotactics = contents.UseAdvancedPhonotactics;
+                $Language.AdvancedPhonotactics = contents.AdvancedPhonotactics;
+            }
+
+            errorMessage = 'There was a problem loading the file’s theme.'
+            if (!!contents.FileTheme) {
+                $Language.FileTheme = contents.FileTheme;
+            }
         } catch (err) {
             vex.dialog.alert(errorMessage + ' Please contact the developer for assistance.');
             diagnostics.logError(errorMessage, err);

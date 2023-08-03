@@ -116,6 +116,13 @@ export type Phonotactics = {
     [index: string]: PhonotacticsLect;
 }
 
+export type AdvancedPhonotactics = {
+    Categories: {
+        [index: string]: string[];
+    }
+    Syllables: string[];
+}
+
 /**
  * `Pronunciations` is a type that is used to represent the values of the text inputs for each dialect from the 
  * Pronunciations field in the Phonology tab. 
@@ -195,6 +202,8 @@ export type Language = {
     ShowPronunciation: boolean;
     ShowOrthography: boolean;
     Phonotactics: Phonotactics;
+    UseAdvancedPhonotactics: boolean;
+    AdvancedPhonotactics: AdvancedPhonotactics;
     Lects: string[];
     Docs: OutputData;
     HeaderTags: string;
@@ -203,4 +212,5 @@ export type Language = {
     ShowEtymology: boolean;
     UseLects: boolean;
     Diagnostics: Diagnostic[];
+    FileTheme: string;
 }

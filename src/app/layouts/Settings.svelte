@@ -358,7 +358,10 @@
                     </optgroup>
                 </select>
             </label>
-            <br><br>
+            <br>
+            <button class="hover-highlight hover-shadow" on:click={()=>{$Language.FileTheme = $theme}}> Set Current Theme as Default for This File </button>
+            <button class="hover-highlight hover-shadow" on:click={()=>{$Language.FileTheme = 'default'}}> Clear File Theme </button>
+            <br>
             <button class="hover-highlight hover-shadow" on:click={custom_theme}> Load Custom Theme… </button>
 
             <br><hr/><br>

@@ -52,7 +52,7 @@
     ipcRenderer.invoke('platform').then((p: string) => platform = p);
 </script>
 
-<link rel="stylesheet" href="{$theme}" />
+<link rel="stylesheet" href="{$Language.FileTheme === 'default'? $theme : $Language.FileTheme}" />
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <body id="body" spellcheck="false">

@@ -48,7 +48,12 @@
 
                 <u>β2.1.6</u> <br>
                 • Added a new Import Plain Text feature to the File tab. Paste a special plain text format for lexicon entries there to have them brought into the app. More info will soon be added to the Help tab; for now, refer to the discord. <br>
-                • Lexicon entry layout tweaks to hopefully improve quality of life. 
+                • Lexicon entry layout tweaks to hopefully improve quality of life.  <br>
+
+                <u>β2.1.7</u> <br>
+                • Made long-requested improvements to the HTML export feature. Ways to improve this further are being looked into.<br>
+                • Another long-requested feature: you can set each of your files to its own color theme. <br>
+                • And a feature requested by a great many folks: added a second type of word generator in which you define phoneme categories and syllable structures.
             <br><br>
 
             <p><u>Patch 2.0.18</u></p>

@@ -38,12 +38,18 @@ const Default: Lexc.Language = {
             Illegals: '',
         }
     },
+    UseAdvancedPhonotactics: false,
+    AdvancedPhonotactics: <Lexc.AdvancedPhonotactics> {
+        Categories: { },
+        Syllables: [],
+    },
     Lects: ['General'],
     Phrasebook: <Lexc.Phrasebook> { },
     Docs: <OutputData> {
         blocks: [ ]
     },
-    Diagnostics: <Lexc.Diagnostic[]> [ ]
+    Diagnostics: <Lexc.Diagnostic[]> [ ],
+    FileTheme: 'default',
 };
 export const defaultLanguage: Writable<Lexc.Language> = writable(Default);
 
