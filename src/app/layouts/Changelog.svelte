@@ -25,36 +25,18 @@
 
             <br><hr/><br>
 
-            <p><u>Beta 2.1</u></p>
-            <p class=narrow>
-                Happy Tanabeta 2.1, everyone. The major new features to test out are as follows. <br>
-                Note: A few features are still planned to be added during the beta period, but they are not yet ready for testing. <br>
-            </p>
+            <p><u>New in 2.1</u></p>
             <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">
-                • The new Reference Panel. Accessible from the File tab, this panel allows you to view a second file in read-only mode. <br>
-                • Advanced Settings: Alternate Orthographies. This option gives you access to the Orthography tab, where you can designate alternative
-                orthographies and fonts installed on your system. <br>
-                • Phonological evolution. This feature, accessible from the File tab, allows you to write sound change rules to apply to your entire lexicon. 
-                After saving your file, it creates a new file with the new words, enables the Etymology advanced setting, creates etymology entries linking 
-                the new and old words, and opens the old file in the Reference Panel.<br><br>
-                <u>β2.1.4</u>
-                <br> Hi. It's been a minute. About time for some bug fixes. Bear with me while I re-learn the codebase: all of these are small fixes and additions, but I'll be back to the larger issues <i>soon</i>™.<br>
-                • Fixed an issue with the dropdown tag selector reported by a couple of people which caused them to break the tag search field. <br>
-                • Fixed <i>another</i> issue with the dropdown selector which caused it to overwrite manually typed tags. <br>
-                • Added a requested setting: you can now hide the pronunciations in the entry displays. <br>
-
-                <u>β2.1.5</u> <br>
-                • Re-implemented a removed feature by request: orthography replacement. In the optional Orthography tab, you can now replace an orthography with a new string. <br>
-
-                <u>β2.1.6</u> <br>
-                • Added a new Import Plain Text feature to the File tab. Paste a special plain text format for lexicon entries there to have them brought into the app. More info will soon be added to the Help tab; for now, refer to the discord. <br>
-                • Lexicon entry layout tweaks to hopefully improve quality of life.  <br>
-
-                <u>β2.1.7</u> <br>
-                • Made long-requested improvements to the HTML export feature. Ways to improve this further are being looked into.<br>
-                • Another long-requested feature: you can set each of your files to its own color theme. <br>
-                • And a feature requested by a great many folks: added a second type of word generator in which you define phoneme categories and syllable structures.
-            <br><br>
+                • Introduced a plain text import feature for convenient clonging on the move. <br>
+                • Added a reference window for loading secondary files in read-only mode. <br>
+                • Support for custom fonts via new Orthographies feature. <br>
+                • Under-the-hood file structure adjustments and read logic improvements. <br>
+                • New phonological evolution tools! <br>
+                • An alternative type of word generator for more advanced syllable structures. <br>
+                • The option to save theme preferences on a file-by-file basis. <br>
+                • New themes: <i>Magnolia</i> by Saturnine, <i>Crabapple</i> by Maarz, and <i>Eostre 2023</i> (a holiday theme released for beta users earlier this year). <br>
+                • A number of bugs removed; probably some bugs added. Please report them if you find them! <br>
+            <br>
 
             <p><u>Patch 2.0.18</u></p>
             <p style="width: 70%; margin: auto; text-align: left; line-height: 1.6">

@@ -343,6 +343,7 @@
                         <option value="styles/marine.css">☾ Marine</option>
                         <option value="styles/glade.css">☾ Glade</option>
                         <option value="styles/pomegranate.css">☾ Pomegranate</option>
+                        <option value="styles/magnolia.css">☾ Magnolia</option>
                         <option value="styles/juniper.css">☀ Juniper</option>
                         <option value="styles/leatherbound.css">☀ Leatherbound</option>
                         <option value="styles/wisteria.css">☀ Wisteria</option>
@@ -351,6 +352,7 @@
                         <option value="styles/purple_maar.css">☾ Purple Maar</option>
                         <option value="styles/terminal_green.css">☾ Terminal</option>
                         <option value="styles/midnight.css">☾ Midnight</option>
+                        <option value="styles/crabapple.css">☾ Crabapple</option>
                         <option value="styles/bone.css">☀ Bone</option>
                     </optgroup>
                     <optgroup label="The Holiday Collection">
