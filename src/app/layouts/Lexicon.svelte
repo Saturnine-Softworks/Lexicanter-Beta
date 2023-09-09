@@ -7,11 +7,13 @@
     import LexEntry from '../components/LexEntry.svelte';
     import SenseInput from '../components/SenseInput.svelte';
     import { debug } from '../utils/diagnostics';
+    import { orderbydate } from '../utils/orderbydate';
     const vex = require('vex-js');
 
     ipcRenderer.on('update-lexicon-for-gods-sake-please', () => {
         $Language.Lexicon = {...$Language.Lexicon};
     });
+
     let defInputs = [''];
     let searchWords = ''; let searchDefinitions = ''; let searchTags = ''; let lectFilter = '';
     $: searchWords, searchDefinitions, searchTags, lectFilter; // Update the search when these values change
@@ -23,16 +25,19 @@
         return acc;
     }, {});
 
-    let alphabetized: string[];
+    let orderedLex: string[];
     $: { // Update the alphabetized lexicon when conditions change
         $Language; 
         $Language.Lexicon; $Language.Pronunciations;
         $Language.ShowEtymology; $Language.Etymologies; 
         $Language.ShowInflection; $Language.Inflections; 
         $Language.Alphabet; $Language.Orthographies;
+        $Language.OrderByDate; 
         keys;
         (() => {
-            alphabetized = alphabetize(!!keys.length? filtered_lex : $Language.Lexicon)
+            orderedLex = $Language.OrderByDate
+                ? orderbydate(!!keys.length? filtered_lex : $Language.Lexicon) 
+                : alphabetize(!!keys.length? filtered_lex : $Language.Lexicon)
         })();
     } 
 
@@ -133,13 +138,13 @@
                     return obj;
                 })(), 
                 Senses: senses.filter(emptySensesFilter).map(senseRemapper),
+                Timestamp: Date.now(),
             };
         } else {
             $Language.Lexicon[word].Senses.push(...senses.filter(emptySensesFilter).map(senseRemapper));
         }
         $Language.Lexicon = {...$Language.Lexicon}; // assignment trigger
 
-        // follow_lex_link(word);
         $wordInput = '';
         $pronunciations = (()=>{
             const obj = {};
@@ -276,6 +281,11 @@
             <input type="checkbox" style="width: 15px; margin: auto;" id="ignore-diacritic" bind:checked={$Language.IgnoreDiacritics}/>
         </div>
         <input id="alph-input" type="text" bind:value={$Language.Alphabet}>
+        <div class="narrow-col">
+            <label for="order-by-timestamp" style="margin: auto; text-align: right;">Order By Most Recent</label>
+            <input type="checkbox" style="width: 15px; margin: auto;" id="order-by-timestamp" bind:checked={$Language.OrderByDate}/>
+        </div>
+
     </div>
     <!-- Body -->
     <div class='row' style="height: 84vh">
@@ -372,7 +382,7 @@
                 {/if}
             </div>
             <div class='scrolled' style="height: 88%">
-                {#each alphabetized as word}
+                {#each orderedLex as word}
                     <LexEntry word={word} source={$Language.Lexicon[word]} showEtymology={true} on:edit={() => editEntry(word)}/>
                 {:else}
                     <p class="info" id="lex-body">Add new words on the left</p>

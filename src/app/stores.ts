@@ -7,6 +7,7 @@ const Default: Lexc.Language = {
     Name: 'Unnamed Language',
     CaseSensitive: false,
     IgnoreDiacritics: true,
+    OrderByDate: false,
     ShowEtymology: false,
     ShowInflection: false,
     Inflections: [],

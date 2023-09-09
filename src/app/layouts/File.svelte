@@ -56,6 +56,9 @@
             if (!!contents.ShowPronunciation) {
                 $Language.ShowPronunciation = contents.ShowPronunciation;
             }
+            if (!!contents.OrderByDate) {
+                $Language.OrderByDate = contents.OrderByDate;
+            }
 
             errorMessage = 'There was a problem loading the alphabet from the file.'
             $Language.Alphabet = contents.Alphabet;
@@ -105,6 +108,7 @@
             if (!!contents.FileTheme) {
                 $Language.FileTheme = contents.FileTheme;
             }
+
         } catch (err) {
             vex.dialog.alert(errorMessage + ' Please contact the developer for assistance.');
             diagnostics.logError(errorMessage, err);
@@ -215,6 +219,11 @@
         window.setTimeout(() => { loading_message = ''; }, 5000);
     }
 
+    /**
+     * Imports a plain text lexicon into the app.
+     * @param {string} plainText - The plain text to be imported.
+     * TODO: Write up the documentation for this in the Help tab.
+     */
     function importPlainText(plainText: string) {
         /**
          * Format:
@@ -267,7 +276,8 @@
             }
             let wordEntry = {
                 'pronunciations': pronunciations,
-                'Senses': sensesEntry
+                'Senses': sensesEntry,
+                'Timestamp': Date.now(),
             }
             
             if (word in $Language.Lexicon) {
@@ -279,6 +289,9 @@
         plainTextImport = '';
     }
 
+    /**
+     * Opens a .lexc file from the user app data folder as a reference language.
+     */
     async function openReferenceFile() {
         let contents;
         let dialog = (userPath: string) => {

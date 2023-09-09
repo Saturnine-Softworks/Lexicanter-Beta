@@ -72,7 +72,7 @@
         searchDescription;
         (() => {phraseKeys = searchBook()})();
     }
-
+    
     /**
      * Changes the selected category and updates the category input field.
      * @param {string} category

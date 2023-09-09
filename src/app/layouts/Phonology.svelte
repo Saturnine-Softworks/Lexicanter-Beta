@@ -1,4 +1,5 @@
 <script lang="ts">
+    import VariantInput from "../components/VariantInput.svelte";
     import { Language } from "../stores";
     import { get_pronunciation, writeRomans, complete_word, generate_word } from '../utils/phonetics'
     let trial = ''; let ortho_test = '';
@@ -30,7 +31,7 @@
         $Language.AdvancedPhonotactics.Syllables = [];
         APSyllables.split('\n').forEach(line => {
             $Language.AdvancedPhonotactics.Syllables.push(line.trim());
-        })
+        }); 
     }
     function generate_word_AP() {
         let word = '';
@@ -87,9 +88,6 @@
                     </div>
                 </div>
                 <br>
-                <button class="hover-highlight hover-shadow" on:click={
-                    () => generated_words = Array(24).fill(null).map(_ => generate_word_AP())
-                }>Generate Words</button>
             {:else}
                 <label for="onsets">Onset Consonants</label>
                 <textarea id="onsets" class="phonology" bind:value={$Language.Phonotactics.General.Onsets}></textarea>
@@ -110,10 +108,12 @@
                 <input type="text" id="trial" bind:value={trial}/>
                 <p style="font-family: Gentium">{trial_completion}</p>
                 <br>
-                <button class="hover-highlight hover-shadow" on:click={
-                    () => generated_words = Array(24).fill(null).map(_ => generate_word())
-                }>Generate Words</button>
+                
             {/if}
+            <button class="hover-highlight hover-shadow" on:click={
+                () => generated_words = Array(24).fill(null).map(_ => $Language.UseAdvancedPhonotactics? generate_word_AP() : generate_word())
+            }>Generate Words</button>
+
             {#each Array(generated_words.length/3).fill(null) as _, i}
                 <div class="row">
                     {#each generated_words.slice(i * 3, i * 3 + 3) as word}
@@ -124,6 +124,7 @@
                 </div>
             {/each}
         </div>
+
         <!-- Romanization -->
         <div class="container column scrolled" style="height: 100%">
             <label>Pronunciations

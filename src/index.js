@@ -54,7 +54,7 @@ const createWindow = () => {
         setTimeout(() => {
             loadingWindow.close();
             mainWindow.show();
-        }, 1000); // give the app a second to load the theme correctly.
+        }, 1000); // give the app a second to load the theme correctly. Otherwise the window flashes white.
     });
     // Set macOS dock icon
     if (process.platform === 'darwin') {
@@ -62,6 +62,8 @@ const createWindow = () => {
         mainWindow.setWindowButtonVisibility(false);
     }
 
+    // This is meant to prevent the app from navigating to external links, only allowing lexicon links.
+    // shell.openExternal() is used to open external links, although it seems to be broken at the moment. 
     const WC = mainWindow.webContents;
     WC.on('will-navigate', function (e, url) {
         if (url.includes('lex::')) {

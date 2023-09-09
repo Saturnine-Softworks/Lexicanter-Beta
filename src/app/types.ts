@@ -4,6 +4,14 @@
 
 import type { OutputData } from '@editorjs/editorjs';
 
+/**
+ * `Diagnostic` is an object with a `Time` string, a `Version` string, an `OS` string, an `Action` string, and an optional `Error` string.
+ * @property {string} Time - The time at which the action was performed.
+ * @property {string} Version - The version of the app which the language was saved with.
+ * @property {string} OS - The operating system of the user.
+ * @property {string} Action - The action that was performed.
+ * @property {string} [Error] - The error that occurred, if any.
+ */
 export type Diagnostic = {
     Time: string,
     Version: string,
@@ -43,6 +51,7 @@ export type EntryPronunciations = {
 export type Word = {
     pronunciations: EntryPronunciations;
     Senses: Sense[];
+    Timestamp: number;
 }
 
 /**
@@ -80,6 +89,10 @@ export type Phrase = {
     variants: { [index: string]: Variant };
 }
 
+/**
+ * A PhraseCategory is an object whose keys are strings and whose values are {@link Phrase}s.
+ * @property {Phrase} [index: Phrase] - Phrase
+ */
 export type PhraseCategory = {
     [index: string]: Phrase;
 }
@@ -116,6 +129,12 @@ export type Phonotactics = {
     [index: string]: PhonotacticsLect;
 }
 
+/**
+ * `AdvancedPhonotactics` is an object with two properties: `Categories` and `Syllables`, which represents
+ * the phonotactics rules for the advanced word generator.
+ * @property {Object} Categories - An object whose keys are category symbols and values are arrays containing string values for the category.
+ * @property {string[]} Syllables - An array of strings which represent syllable types. 
+ */
 export type AdvancedPhonotactics = {
     Categories: {
         [index: string]: string[];
@@ -143,6 +162,12 @@ export type Descendant = {
     source: '<< THIS LANGUAGE >>' | string;
 }
 
+/**
+ * `Etymologies` is a type that is used to represent the etymologies for each word.
+ * @property {Descendant[]} descendants - An array of {@link Descendant} objects that represent the child entries of the word.
+ * @property {string | ['current language']} source - The name of the language in which the parent entry is written, or
+ * 'current language' if the entry was chosen from the lexicon.
+ */
 export type Etymologies = {
     [index: string]: {
        descendants: Descendant[];
@@ -150,6 +175,15 @@ export type Etymologies = {
     };
 }
 
+/**
+ * `Orthography` is a type that is used to represent a set of orthography rules.
+ * @property {string} name - The name of the orthography.
+ * @property {string} font - The font to use for the orthography.
+ * @property {'rom' | 'ipa'} root - Whehter this orthography uses a word's pronunciation or romanization as a base.
+ * @property {string} lect - The name of the lect to which this orthography applies.
+ * @property {string} rules - The rewrite rules for this orthography.
+ * @property {boolean} display - Whether or not to display this orthography in the lexicon.
+ */
 export type Orthography = {
     name: string;
     font: string;
@@ -160,32 +194,32 @@ export type Orthography = {
 }
 
 /**
- * A language is a collection of words, phrases, organization and configuration settings, and sets of pronunciation rules.
- * Below are all the places where the name of key should be the name of a lect:
- * ```
- * Language.Lexicon.Word.pronunciations[lect]
- * Language.Phrasebook.Phrase.pronunciations[lect]
- * Language.Phrasebook.Phrase.Variant.pronunciations[lect]
- * Language.Phonotactics[lect]
- * Language.Pronunciations[lect]
- * ```
- * Additionally, the values of the following keys should be arrays of lect names:
- * ```
- * Language.Lexicon.Word.Senses.lects
- * Language.Phrasebook.Phrase.lects
- * Language.Phrasebook.Phrase.variants.lects
- * ```
  * @property {number} Version - The version of the app which the language was saved with. This is used to determine how to load the language.
  * @property {string} Name - The name of the language.
  * @property {Lexicon} Lexicon - A {@link Lexicon} object that contains all the words in the language.
+ * @property {string} Etymologies - An {@link Etymologies} object that contains the etymologies for each word.
+ * @property {Object} Relatives - An object whose keys are strings and whose values are {@link Lexicon}s.
+ * @property {Object[]} Inflections - An array of objects that contain the inflection data.
+ * @property {boolean} ShowInflection - Whether or not to show the Inflection tab and features.
  * @property {Phrasebook} Phrasebook - A {@link Phrasebook} object that contains all the phrases in the language.
  * @property {string} Alphabet - Space-separated tokens representing the alphabetization order for the lexicon.
  * @property {string} Pronunciations - The values of the text inputs for each dialect from the Pronunciations field in the Phonology tab.
+ * @property {Orthography[]} Orthographies - An array of {@link Orthography} objects that contain the orthography rules.
+ * @property {boolean} ShowPronunciation - Whether or not to show pronunciations in the lexicon.
+ * @property {boolean} ShowOrthography - Whether or not to show the Orthography tab and features.
  * @property {Phonotactics} Phonotactics - A {@link Phonotactics} object that contains the phonotactics rules.
+ * @property {boolean} UseAdvancedPhonotactics - Toggles which type of word generator is shown for this file by default. 
+ * @property {AdvancedPhonotactics} AdvancedPhonotactics - An {@link AdvancedPhonotactics} object that contains the advanced phonotactics rules.
+ * @property {string[]} Lects - An array of strings that contains the names of all the lects in the language.
  * @property {OutputData} Docs - An {@link OutputData} object that contains the documentation for the language saved by EditorJS.
  * @property {string} HeaderTags - This is a string of lexicon tags that will be placed at the top of the lexicon display.
  * @property {boolean} CaseSensitive - Whether or not alphabetization and pronunciation rules are case sensitive.
  * @property {boolean} IgnoreDiacritics - Whether or not alphabetization and pronunciation rules ignore diacritics.
+ * @property {boolean} ShowEtymology - Whether or not to show the Etymology tab and features. 
+ * @property {boolean} UseLects - Whether or not to show Lects features.
+ * @property {Diagnostic[]} Diagnostics - An array of {@link Diagnostic} objects that contain information about the user's actions.
+ * @property {string} FileTheme - If the user has chosen a theme for the specific file, this is the name of that theme.
+ * @property {boolean} OrderByDate - Whether or not to order the lexicon by date.
  */
 export type Language = {
     Version: string;
@@ -213,4 +247,5 @@ export type Language = {
     UseLects: boolean;
     Diagnostics: Diagnostic[];
     FileTheme: string;
+    OrderByDate: boolean;
 }
