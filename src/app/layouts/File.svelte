@@ -1,16 +1,36 @@
 <script lang="ts">
     const fs = require('fs');
     const path = require('path');
-    import { docsEditor, Language, selectedCategory, fileLoadIncrement, referenceLanguage, defaultLanguage } from '../stores';
+    import { docsEditor, Language, selectedCategory, fileLoadIncrement, referenceLanguage, defaultLanguage, dbid, dbkey } from '../stores';
     import type { OutputData } from '@editorjs/editorjs';
     import type * as Lexc from '../types';
-    import { userData, showOpenDialog, saveFile, openLegacy, saveAs, importCSV } from '../utils/files';
+    import { userData, showOpenDialog, saveFile, openLegacy, saveAs, importCSV, retrieveFromDatabase } from '../utils/files';
     import { get_pronunciation, writeRomans } from '../utils/phonetics';
     import { initializeDocs } from '../utils/docs';
     import * as diagnostics from '../utils/diagnostics';
     import Evolver from '../components/Evolver.svelte';
     import type { Sense } from '../types';
+    import {tooltip} from '@svelte-plugins/tooltips';
+    import { onMount } from 'svelte';
+    import { verifyHash } from '../utils/verification';
+    import { vectorSearchTable } from '@xata.io/client';
     const vex = require('vex-js');
+
+    let locationSelector: HTMLInputElement;
+    onMount(() => {
+        locationSelector.webkitdirectory = true;
+    });
+    function selectSaveLocation () {
+        showOpenDialog({
+            properties: ['openDirectory'],
+        }, file_path => {
+            if (file_path === undefined) {
+                return;
+            }
+            $Language.SaveLocation = file_path[0];
+        });
+    }
+
     $: loading_message = '';
     let csv = {
         headers: true,
@@ -30,7 +50,7 @@
      * If the file is a legacy version, it is passed to the appropriate function.
      * @param {Object} contents - The contents of the opened file.
      */
-    function read_contents (contents) {
+    async function read_contents (contents) {
         if (typeof contents.Version === 'number' || contents.Version === '1.8.x') {
             try { openLegacy[contents.Version](contents); }
             catch (err) {
@@ -53,11 +73,22 @@
             $Language.UseLects = contents.UseLects;
             $Language.ShowEtymology = contents.ShowEtymology;
             $Language.ShowInflection = contents.ShowInflection;
-            if (!!contents.ShowPronunciation) {
+            // check for the existence of properties so that 'undefined' is not assigned
+            if (contents.hasOwnProperty('ShowPronunciation')) {
                 $Language.ShowPronunciation = contents.ShowPronunciation;
             }
-            if (!!contents.OrderByDate) {
+            if (contents.hasOwnProperty('OrderByDate')) {
                 $Language.OrderByDate = contents.OrderByDate;
+            } else {
+                for (let word in contents.Lexicon) {
+                    contents.Lexicon[word].Timestamp = Date.now();
+                }
+            }
+            if (contents.hasOwnProperty('SaveLocation')) {
+                $Language.SaveLocation = contents.SaveLocation;
+            }
+            if (contents.hasOwnProperty('FileVersion')) {
+                $Language.FileVersion = contents.FileVersion
             }
 
             errorMessage = 'There was a problem loading the alphabet from the file.'
@@ -82,7 +113,7 @@
             $Language.Lects.forEach(writeRomans);
 
             errorMessage = 'There was a problem loading the orthography data from the file.'
-            if (!!contents.Orthographies) {
+            if (contents.hasOwnProperty('Orthographies')) {
                 $Language.Orthographies = contents.Orthographies;
                 $Language.ShowOrthography = contents.ShowOrthography;
             }
@@ -99,14 +130,68 @@
             $Language.Etymologies = contents.Etymologies;
 
             errorMessage = 'There was a problem loading the advanced phonotactics.';
-            if (!!contents.AdvancedPhonotactics) {
+            if (contents.hasOwnProperty('AdvancedPhonotactics')) {
                 $Language.UseAdvancedPhonotactics = contents.UseAdvancedPhonotactics;
+                // Constructs and Illegals fields were added at the same time in 2.1.13 - only need to check for one to know if both exist
+                // REVIEW - This could also be achieved by checking if the file version is 2.1.13 or higher, which would require a Semantic Versioning parser.
+                //          Could be worth finding a SemVer parser.
+                if (!contents.AdvancedPhonotactics.hasOwnProperty('Constructs')) {
+                    contents.AdvancedPhonotactics.Constructs = [{enabled:true, structures:''}];
+                    contents.AdvancedPhonotactics.Illegals = [];
+                }
                 $Language.AdvancedPhonotactics = contents.AdvancedPhonotactics;
             }
 
             errorMessage = 'There was a problem loading the file’s theme.'
-            if (!!contents.FileTheme) {
+            if (contents.hasOwnProperty('FileTheme')) {
                 $Language.FileTheme = contents.FileTheme;
+            }
+
+            errorMessage = 'There was a problem syncing with the database.'
+            if (contents.hasOwnProperty('UploadToDatabase')) {
+                $Language.UploadToDatabase = contents.UploadToDatabase
+                if ($Language.UploadToDatabase) {
+                    if ($dbid === '' || $dbkey === '') {
+                        vex.dialog.alert('The file you opened has database syncing turned on, but your user ID or account key are blank.');
+                        return;
+                    }
+                    if (verifyHash($dbid, $dbkey)) {
+                        const queryResult = await retrieveFromDatabase(contents.Name);
+                        if (queryResult !== false) {
+                            if (queryResult.FileVersion === undefined) {
+                                vex.dialog.confirm({
+                                    message: `The file in the database has no FileVersion number. Would you like to overwrite it with your local version?`,
+                                    yesText: 'Upload Local Version',
+                                    callback: (proceed) => {
+                                        if (proceed) {
+                                            saveFile();
+                                            vex.dialog.alert('Saved and uploaded local file.')
+                                        }
+                                    }
+                                })
+                            } else if ( parseInt($Language.FileVersion, 36) < parseInt(queryResult.FileVersion, 36) ) {
+                                vex.dialog.confirm({
+                                    message: `Detected a newer version of the file in the database (local: ${$Language.FileVersion} | online: ${queryResult.FileVersion}). Would you like to download the changes?`,
+                                    yesText: 'Download Changes',
+                                    callback: (proceed, download = queryResult) => {
+                                        if (proceed) {
+                                            $Language = download;
+                                            initializeDocs(download.Docs);
+                                            saveFile();
+                                            vex.dialog.alert('Downloaded changes and saved.')
+                                        } else {
+                                            vex.dialog.alert('Did not download changes. If you change your mind, click the Sync From Database button in the Settings tab. This will overwrite local changes.')
+                                        }
+                                    }
+                                })
+                            }
+                        } else {
+                            vex.dialog.alert('No file of this name was found in your ownership in the database.');
+                        }
+                    } else {
+                        vex.dialog.alert('One or both of your User ID and Key is invalid.');
+                    }
+                }
             }
 
         } catch (err) {
@@ -219,11 +304,6 @@
         window.setTimeout(() => { loading_message = ''; }, 5000);
     }
 
-    /**
-     * Imports a plain text lexicon into the app.
-     * @param {string} plainText - The plain text to be imported.
-     * TODO: Write up the documentation for this in the Help tab.
-     */
     function importPlainText(plainText: string) {
         /**
          * Format:
@@ -289,9 +369,6 @@
         plainTextImport = '';
     }
 
-    /**
-     * Opens a .lexc file from the user app data folder as a reference language.
-     */
     async function openReferenceFile() {
         let contents;
         let dialog = (userPath: string) => {
@@ -367,63 +444,76 @@
 
 </script>
 <!-- File Tab -->
-<div class="tab-pane">
-    <div class="row" style="height: 95vh">
-        <div class="column container" style="overflow-y:auto">
+<div class=tab-pane>
+    <div class=row style=height:95vh>
+        <div class="column container" style=overflow-y:auto>
             <p>Document</p>
-            <label for="file-name">Name</label>
-            <input type="text" id="file-name" bind:value={$Language.Name}/>
+            <label for=file-name use:tooltip={{position:'right'}} title={`Your file will be saved as: ${$Language.Name}.lexc`}>Name</label>
+            <input type=text id=file-name bind:value={$Language.Name}/>
             <br>
-            <div class="narrow row">
-                <div class="column">
+            <div class='narrow row'>
+                <div class=column>
                     <button on:click={saveFile} class="hover-highlight hover-shadow">Save…</button>
                     <button on:click={openFile} class="hover-highlight hover-shadow">Open…</button>
                     <p class="info">Save your lexicon or open a previously saved one.</p>
                 </div>
-                <div class="column"> 
-                    <div class="milkyWay">
+                <div class=column> 
+                    <div class=milkyWay>
                         <!-- Loader -->
-                        <div class="sun"></div>
+                        <div class=sun></div>
                         {#each ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'] as planet}
-                             <div class="planet {planet}"></div>
+                            <div class="planet {planet}"></div>
                         {/each}
                     </div>
                     <p>{loading_message}</p>
                 </div>
-                <div class="column">
-                    <button on:click={saveAs.lexc} class="hover-highlight hover-shadow">Export…</button>
-                    <button on:click={importFile} class="hover-highlight hover-shadow">Import…</button>
-                    <p class="info">Export and import your own copies of the lexicon file.</p>
+                <div class=column>
+                    <button on:click={saveAs.lexc} class='hover-highlight hover-shadow'
+                        use:tooltip={{position:'left'}} title='Allows you to save your file to a custom location.'>Export…</button>
+                    <button on:click={importFile} class='hover-highlight hover-shadow'
+                        use:tooltip={{position:'left'}} title='Makes it easier to import files from a custom location.'>Import…</button>
+                    <p class=info>Export and import your own copies of the lexicon file.</p>
                 </div>
             </div>
+            <div class=narrow>
+                <label for=save-locations>Secondary Save Locations</label>
+                <button id=save-locations class='hover-highlight hover-shadow' on:click={selectSaveLocation}>Choose Location…</button> 
+                <p>Selected location: <u>{$Language.SaveLocation}<u></p>
+            </div>
             <br>
-            <p>Lexicon Header Tags</p>
-            <div class="narrow">
+            <p use:tooltip={{position:'top'}} title='Here you can define Header Tags. Words in the lexicon with these tags will be sorted above the rest.'>
+                Lexicon Header Tags</p>
+            <div class=narrow>
                 <textarea bind:value={$Language.HeaderTags}></textarea>
-                <p class="info">
+                <p class=info>
                     Entries with these tags will be sorted separately at the top of the lexicon.
                 </p>
             </div>
             <br>
-            <button class="hover-highlight hover-shadow" on:click={openReferenceFile}>Open Reference File</button>
+            <button class="hover-highlight hover-shadow" 
+                use:tooltip={{position:'top'}} title="This allows you to open a second language file in read-only mode for referencing."
+                on:click={openReferenceFile}>Open Reference File</button>
             {#if typeof $referenceLanguage === 'object'}
                 <p>Reference Language: {$referenceLanguage.Name}</p>
                 <button on:click={()=>$referenceLanguage = false} class="hover-highlight hover-shadow">Close Reference File</button>
                 {#if $Language.ShowEtymology}
-                    <button on:click={() => {
-                        if (typeof $referenceLanguage === 'object') { // redundant check is necessary for linter
-                            if ($referenceLanguage.Name in $Language.Relatives) {
-                                vex.dialog.alert(`There is already a relative lexicon with the name ${$referenceLanguage.Name}.`);
-                                return;
+                    <button 
+                        use:tooltip={{position:'top'}} title="If you are using Etymology features, this allows you to import a lexicon from another language file as a relative you can which link words to and from."
+                        on:click={() => {
+                            if (typeof $referenceLanguage === 'object') { // redundant check is necessary for linter
+                                if ($referenceLanguage.Name in $Language.Relatives) {
+                                    vex.dialog.alert(`There is already a relative lexicon with the name ${$referenceLanguage.Name}.`);
+                                    return;
+                                }
+                                $Language.Relatives[$referenceLanguage.Name] = $referenceLanguage.Lexicon;
+                                vex.dialog.alert(`Successfully imported ${$referenceLanguage.Name} as a relative lexicon.`);
                             }
-                            $Language.Relatives[$referenceLanguage.Name] = $referenceLanguage.Lexicon;
-                            vex.dialog.alert(`Successfully imported ${$referenceLanguage.Name} as a relative lexicon.`);
-                        }
                     }}>Import Reference Lexicon as Related Lexicon</button>
                 {/if}
             {/if}
             <br>
-            <p>Evolve Language</p>
+            <p use:tooltip={{position:'top'}} title="This feature allows you to apply sound change rules across your lexicon, and then save the result as a new language file.">
+                Evolve Language</p>
             <Evolver/>
             <br>
             <p>Export Lexicon</p>

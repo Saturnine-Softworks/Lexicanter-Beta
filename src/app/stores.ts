@@ -3,11 +3,11 @@ import EditorJS, { type OutputData } from '@editorjs/editorjs';
 import type * as Lexc from './types'; 
 
 const Default: Lexc.Language = {
-    Version: '2.1.0',
+    Version: '2.1.15',
+    FileVersion: '0',
     Name: 'Unnamed Language',
     CaseSensitive: false,
     IgnoreDiacritics: true,
-    OrderByDate: false,
     ShowEtymology: false,
     ShowInflection: false,
     Inflections: [],
@@ -18,7 +18,18 @@ const Default: Lexc.Language = {
     Etymologies: <Lexc.Etymologies> { },
     Relatives: { },
     Pronunciations: <Lexc.Pronunciations> {
-        General: 'place > holder'
+        General: 'Use this field to write pronunciation rules to automatically transcribe your orthography in IPA. For example,\n'
+        + 'th > θ\n'
+        + 'This rule will automatically transcribe any ⟨th⟩ in your orthography as [θ].\n'
+        + 'Rules can be much more complex than this. You can read the section on pronunciation rules in the Help tab for more information.\n\n'
+        + 'The most common mistake has to do with the fact that rules are applied in order from top to bottom. For example, if you have the following rules,\n' 
+        + 'e > ɛ\n'
+        + 'ae > æ\n'
+        + 'then the second rule will never be applied, because the first rule will always change ⟨e⟩ to [ɛ] before the second rule can be applied.\n'
+        + 'The solution in almost all cases like this is to change the order of the rules so that the ones with the longest patterns are applied first.\n'
+        + 'ae > æ\n'
+        + 'e > ɛ\n'
+        + 'Now both rules will be applied correctly. You can test this by removing the first set of rules from this demo.'
     },
     Orthographies: <Lexc.Orthography[]> [{
         name: 'Romanization',
@@ -42,7 +53,9 @@ const Default: Lexc.Language = {
     UseAdvancedPhonotactics: false,
     AdvancedPhonotactics: <Lexc.AdvancedPhonotactics> {
         Categories: { },
-        Syllables: [],
+        Syllables: [ ],
+        Constructs: [{enabled:true, structures:''}],
+        Illegals: [ ],
     },
     Lects: ['General'],
     Phrasebook: <Lexc.Phrasebook> { },
@@ -51,6 +64,9 @@ const Default: Lexc.Language = {
     },
     Diagnostics: <Lexc.Diagnostic[]> [ ],
     FileTheme: 'default',
+    OrderByDate: false,
+    SaveLocation: '',
+    UploadToDatabase: false,
 };
 export const defaultLanguage: Writable<Lexc.Language> = writable(Default);
 
@@ -93,3 +109,6 @@ export const fileLoadIncrement = writable(0);
 export const hideDropdowns = writable(false);
 
 export const referenceLanguage: Writable<Lexc.Language>|Writable<boolean> = writable(false);
+
+export const dbid = writable(''); 
+export const dbkey = writable('');

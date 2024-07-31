@@ -6,6 +6,7 @@
     import PhraseEntry from '../components/PhraseEntry.svelte';
     import VariantInput from '../components/VariantInput.svelte';
     import SenseInput from '../components/SenseInput.svelte';
+    import { tooltip } from '@svelte-plugins/tooltips';
     const vex = require('vex-js');
     $categoryInput = $selectedCategory;
     let searchPhrase = '';
@@ -30,49 +31,39 @@
         const scope: Lexc.PhraseCategory = $Language.Phrasebook[$selectedCategory];
         const phrase_search = searchPhrase.trim();
         const descript_search = searchDescription.toLowerCase().trim();
-        const tagsSearch = searchTags.toLowerCase().trim().split(/\s+/g).filter(s => !!s);
-        if (!phrase_search && !descript_search) return Object.keys(scope);
+        const tags_search = searchTags.toLowerCase().trim();
 
         let keys = [];
         for (let entry in scope) {
             let term = '^' + entry.replaceAll(/\s+/g, '^') + '^';
-            let phraseMatch = !phrase_search
-            let descriptMatch = !descript_search
-            let tagMatch = !tagsSearch
-            const filterLect = lectFilter? !lectFilter : scope[entry].lects.includes(lectFilter);
-
-            if (term.includes(phrase_search))
-                phraseMatch = true;
-            if (scope[entry].description.toLowerCase().includes(descript_search)) 
-                descriptMatch = true;
-            if (!!tagsSearch) {
-                if (scope[entry].tags.some(tag => tagsSearch.includes(tag)))
-                    tagMatch = true;
+            if (!phrase_search || term.toLowerCase().includes(phrase_search)) {
+                if (!descript_search || scope[entry].description.toLowerCase().includes(descript_search)) {
+                    if (!tags_search || scope[entry].tags.join(' ').toLowerCase().includes(tags_search)) {
+                        if (!lectFilter || scope[entry].lects.includes(lectFilter)) {
+                            keys.push(entry);
+                        }
+                    }
+                }
             }
-
-
             for (let variant in scope[entry].variants) {
-                let v_term = '^' + variant + '^';
-                if (v_term.includes(phrase_search))
-                    phraseMatch = true;
-                if (scope[entry].variants[variant].description .toLowerCase().includes(descript_search))
-                    descriptMatch = true;
+                let variantEntry = scope[entry].variants[variant];
+                let term = '^' + variant.replaceAll(/\s+/g, '^') + '^';
+                if (!phrase_search || term.toLowerCase().includes(phrase_search)) {
+                    if (!descript_search || variantEntry.description.toLowerCase().includes(descript_search)) {
+                        keys.push(entry);
+                    }
+                }
             }
-
-            if (phraseMatch && descriptMatch && tagMatch && filterLect) 
-                keys.push(entry);
         }
-        return keys;
+        return [...new Set(keys)]; // spread set syntax = no duplicate keys
     }
     $: {
-        // any time $selectedCategory, search_phrase, or search_description changes, update phrase_keys
+        // any time $selectedCategory, searchPhrase, searchTags, lectFilter, or searchDescription changes, update phrase_keys
         $Language.Phrasebook;
-        $selectedCategory;
-        searchPhrase;
-        searchDescription;
+        $selectedCategory; searchPhrase; searchDescription; searchTags; lectFilter;
         (() => {phraseKeys = searchBook()})();
     }
-    
+
     /**
      * Changes the selected category and updates the category input field.
      * @param {string} category
@@ -88,6 +79,7 @@
      */ 
     function editPhrase(phrase: string): void {
         $phraseInput = phrase;
+        $categoryInput = $selectedCategory;
         $phrasePronunciations = (() => {
             let pronunciations = {};
             Object.keys($Language.Phrasebook[$selectedCategory][phrase].pronunciations).forEach(lect => {
@@ -210,7 +202,8 @@
     <div class="row" style="height: 58vh;">
         <!-- Categories -->
         <div class="container column" style="max-width: 18%;">
-            <p>Categories</p>
+            <p use:tooltip={{position:'bottom'}} title="This panel will fill with category names as you assign phrases to new ones.">
+                Categories</p>
             <hr />
             <div class="column scrolled" style="max-height: 90%;" id="category-body">
                 {#each Object.keys($Language.Phrasebook) as category}
@@ -278,7 +271,8 @@
         <div class="row" class:collapsed={collapsedPanel} style="height: 92%">
             <div class="column scrolled" style="max-height: 100%">
                 
-                <label for="phrase">Phrase</label>
+                <label for="phrase" use:tooltip={{position:'right'}} title="Write a new phrase in your language here. The pronunciation is updated the same as in the Lexicon tab.">
+                    Phrase</label>
                 <input type="text" bind:value={$phraseInput} on:input={() => {
                     lects.forEach(lect => {
                         $phrasePronunciations[lect] = get_pronunciation($phraseInput, lect);
@@ -307,7 +301,7 @@
                     bind:lects={lects}
                 />
 
-                <label>Category
+                <label><p use:tooltip={{position:'right'}} title="Use this field to assign this phrase to a category, or to create a new one with this phrase as its first member.">Category</p>
                     <input type="text" bind:value={$categoryInput} />
                 </label>
 
@@ -329,7 +323,9 @@
                 {:else}
                     <p class="info">Click the button below to add a variation for this phrase</p>
                 {/each}
-                <button on:click={addVariant} class="hover-shadow hover-highlight">+ Variant</button>
+                <button on:click={addVariant} class="hover-shadow hover-highlight"
+                    use:tooltip={{position:'bottom', autoPosition: true}} title="If there are multiple ways to say your phrase, you can add variant entries for it along with descriptions."
+                >+ Variant</button>
             </div>
         </div>
     </div>

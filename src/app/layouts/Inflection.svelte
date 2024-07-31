@@ -169,7 +169,7 @@
                                     window.setTimeout(() => {
                                         remakeEditors(i);
                                         $Language.Inflections = $Language.Inflections.filter((_, index) => index !== i);
-                                    }, 666);
+                                    }, 500);
                                 }
                             }
                         })

@@ -4,6 +4,8 @@
     let selectedOrtho = '';
     let testInput = '';
     const vex = require('vex-js');
+    import { graphemify } from "../utils/interop/rust-interop";
+    import { showOpenDialog, readSVG, correctSVGSize } from "../utils/files";
 
     let orthographyReplacement = {
         pattern: '',
@@ -11,10 +13,16 @@
     };
     let orthographyChangeEndMessage = '';
 
+    let SVGData: string = '';
+    let graphemyOutput: string = '';
+
+    // IIFE here re-reads SVG data on load and every time `graphemyOutput` is updated.
+    $: graphemyOutput, (() => SVGData = correctSVGSize(readSVG()))();
+
     /**
      * Binding directly to the Language store seems to be very slow, so this function is used to
      * update the store when the user clicks out of an input field.
-     * @param event
+     * @param event_or_element
      * @param attribute
      * @param index
      */
@@ -53,16 +61,39 @@
                         readonly={orthography.name==='Romanization'}
                     />
                 </label>
-                <label>Font
+                <!-- svelte-ignore a11y-label-has-associated-control -->
+                <label>Typesetter
+                    {#if orthography.name === 'Romanization'}
+                        <span>: Packaged Font</span>
+                    {:else}
+                        <select bind:value={$Language.Orthographies[i].typesetter}>
+                            <option value=font>Use an installed font</option>
+                            <option value=graphemy>Use a Graphemy file</option>
+                        </select>
+                    {/if}
+                </label>
+                {#if orthography.typesetter === "font"}
                     <input type=text 
-                        on:blur={(e) => {
-                            setAttribute(e, 'font', i);
-                        }}
+                        on:blur={e => setAttribute(e, 'font', i)}
                         style:background-color={orthography.name === 'Romanization' ? 'transparent' : ''}
                         value={orthography.font}
                         readonly={orthography.name==='Romanization'}
                     />
-                </label>
+                {:else if orthography.typesetter === "graphemy"}
+                    <button on:click={() => {
+                        showOpenDialog({
+                            title: 'Select Graphemy File',
+                            properties: ['openFile'],
+                        },
+                        file_path => {
+                            $Language.Orthographies[i].font  = file_path[0]
+                        });
+                    }}>Locate File</button>
+                    <input type=text id={`graphemy-file-input${i}`}
+                        bind:value={ orthography.font } 
+                        readonly
+                    />
+                {/if}
                 <!-- svelte-ignore a11y-label-has-associated-control -->
                 <label>Root
                     {#if orthography.name === 'Romanization'}
@@ -120,7 +151,8 @@
                             root: 'ipa',
                             lect: $Language.Lects[0],
                             rules: '',
-                            display: true
+                            display: true,
+                            typesetter: 'font'
                         }
                     ];
                 }}
@@ -134,17 +166,34 @@
             </select>
             <label>Test Input
                 <textarea bind:value={testInput} rows=6/>
-                <textarea
-                    rows=6
-                    style:background-color=transparent
-                    style:font-family={$Language.Orthographies.find(o => o.name === selectedOrtho)?.font || 'Gentium'}
-                    value={(() => {
-                        const settings = parseRules($Language.Orthographies.find(o => o.name === selectedOrtho)?.rules || '');
-                        return applyRules(settings.rules, testInput, settings.categories);
-                    })()}
-                    readonly
-                />
+                {#if $Language.Orthographies.find(o => o.name === selectedOrtho)?.typesetter === 'graphemy'}
+                    <button on:click={async () => {
+                        graphemyOutput = await graphemify(
+                            $Language.Orthographies.find(o => o.name === selectedOrtho)?.font,
+                            (() => {
+                                const settings = parseRules($Language.Orthographies.find(o => o.name === selectedOrtho)?.rules || '');
+                                return applyRules(settings.rules, testInput, settings.categories);
+                            })()
+                        );
+                    }}>Generate SVG</button>
+                    <br>
+                    <div>
+                        {@html SVGData}
+                    </div>
+                {:else}
+                    <textarea
+                        rows=6
+                        style:background-color=transparent
+                        style:font-family={$Language.Orthographies.find(o => o.name === selectedOrtho)?.font || 'Gentium'}
+                        value={(() => {
+                            const settings = parseRules($Language.Orthographies.find(o => o.name === selectedOrtho)?.rules || '');
+                            return applyRules(settings.rules, testInput, settings.categories);
+                        })()}
+                        readonly
+                    />
+                {/if}
             </label>
+            <br>
             <br>
             <label>Change Orthography
                 <div class="narrow">
@@ -154,19 +203,16 @@
                         () => {
                             for (let word in $Language.Lexicon) {
                                 if (word.includes(orthographyReplacement.pattern)) {
-                                    try { 
-                                        $Language.Lexicon[word.replace(orthographyReplacement.pattern, orthographyReplacement.replacement)] = $Language.Lexicon[word];
+                                    try {
+                                        let newWord = '#' + word + '#'
+                                        let pattern = orthographyReplacement.pattern.replaceAll('^', '#')
+                                        newWord = newWord.replaceAll(pattern, orthographyReplacement.replacement)
+                                        $Language.Lexicon[newWord] = $Language.Lexicon[word];
                                         delete $Language.Lexicon[word];
                                         orthographyChangeEndMessage = 'Change applied successfully.';
-                                        window.setTimeout(() => {
-                                            orthographyChangeEndMessage = '';
-                                        }, 15000);
                                     } catch (e) {
                                         console.log(e);
                                         orthographyChangeEndMessage = 'An error occurred while applying the change. Please contact the developer for assistance and check the console.';
-                                        window.setTimeout(() => {
-                                            orthographyChangeEndMessage = '';
-                                        }, 30000);
                                     }
                                 }
                             }

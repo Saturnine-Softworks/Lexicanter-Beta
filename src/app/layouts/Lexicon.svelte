@@ -7,13 +7,13 @@
     import LexEntry from '../components/LexEntry.svelte';
     import SenseInput from '../components/SenseInput.svelte';
     import { debug } from '../utils/diagnostics';
-    import { orderbydate } from '../utils/orderbydate';
     const vex = require('vex-js');
+    import { tooltip } from '@svelte-plugins/tooltips';
+    import { join } from 'path';
 
     ipcRenderer.on('update-lexicon-for-gods-sake-please', () => {
         $Language.Lexicon = {...$Language.Lexicon};
     });
-
     let defInputs = [''];
     let searchWords = ''; let searchDefinitions = ''; let searchTags = ''; let lectFilter = '';
     $: searchWords, searchDefinitions, searchTags, lectFilter; // Update the search when these values change
@@ -25,19 +25,16 @@
         return acc;
     }, {});
 
-    let orderedLex: string[];
+    let alphabetized: string[];
     $: { // Update the alphabetized lexicon when conditions change
         $Language; 
         $Language.Lexicon; $Language.Pronunciations;
         $Language.ShowEtymology; $Language.Etymologies; 
         $Language.ShowInflection; $Language.Inflections; 
         $Language.Alphabet; $Language.Orthographies;
-        $Language.OrderByDate; 
         keys;
         (() => {
-            orderedLex = $Language.OrderByDate
-                ? orderbydate(!!keys.length? filtered_lex : $Language.Lexicon) 
-                : alphabetize(!!keys.length? filtered_lex : $Language.Lexicon)
+            alphabetized = alphabetize(!!keys.length? filtered_lex : $Language.Lexicon)
         })();
     } 
 
@@ -109,7 +106,7 @@
                 let { [word]: _, ...rest } = $Language.Lexicon;
                 $Language.Lexicon = rest;
                 $hideDropdowns = false;
-            }, 50);
+            }, 100);
         }
     }
 
@@ -145,6 +142,7 @@
         }
         $Language.Lexicon = {...$Language.Lexicon}; // assignment trigger
 
+        // follow_lex_link(word);
         $wordInput = '';
         $pronunciations = (()=>{
             const obj = {};
@@ -194,77 +192,87 @@
      * or end of a word. Searches are combinative, and only
      * results which match all search input fields will be
      * selected as matches. 
-     * @returns {any}
      */
     function search_lex(): void {
-        let words_search = $Language.CaseSensitive?  searchWords.trim() : searchWords.toLowerCase().trim();
+        let words_search = $Language.CaseSensitive? searchWords.trim() : searchWords.toLowerCase().trim();
         let definitions_search = searchDefinitions.toLowerCase().trim();
-        let tags_search = searchTags.toLowerCase().trim()? searchTags.toLowerCase().trim().split(/\s+/g) : [];
+        let tags_search = searchTags.toLowerCase().trim();
         keys = [];
-        if (!!words_search || !!definitions_search || !!tags_search[0] || !!lectFilter) {
-            // Turn l into a list of [search by word terms, search by def terms
-            let l = [[...words_search.split('|')], [...definitions_search.split('|')]];
+        if (!!words_search || !!definitions_search || !!tags_search || !!lectFilter) { // if there is at least one search term
             for (let word in $Language.Lexicon) {
-                const w = '^' + word.replaceAll(/\s+/g, '^') + '^';
-                let match = lectFilter? $Language.Lexicon[word].Senses.some(sense => sense.lects.includes(lectFilter)) : true;
-                if (!match) continue;
-                for (let a of l[0]) {
-                    // words
-                    if (!w.includes(a)) {
+                let entry = $Language.Lexicon[word];
+                let match = true;
+
+                // check lect filter
+                if ( !!lectFilter ) {
+                    if ( !entry.Senses.some(sense => sense.lects.includes(lectFilter)) ) {
                         match = false;
+                        continue;
                     }
                 }
-                for (let a of l[1]) {
-                    // definitions
-                    let needs_exact_match = a[0] === '!';
-                    if (needs_exact_match) {
-                        let pattern = `\\b${a.split('!')[1]}\\b`;
-                        $Language.Lexicon[word].Senses.forEach(sense => {
-                            if (!sense.definition.toLowerCase().match(pattern)) {
-                                // no exact word match
+
+                // check word
+                if ( !!words_search ) {
+                    let caseFixedWord = $Language.CaseSensitive? word : word.toLowerCase();
+                    if ( words_search[0] === '!') { // requires exact match
+                        if (caseFixedWord !== words_search.split('!')[1]) {
+                            match = false;
+                            continue;
+                        }
+                    } else if ( !('^' + caseFixedWord.replaceAll(/\s+/g, '^') + '^').includes(words_search.replaceAll(/\s+/g, '^')) ) {
+                        // searches for inexact match
+                        match = false;
+                        continue;
+                    }
+                }
+
+                // check definitions
+                if ( !!definitions_search ) {
+                    if ( definitions_search[0] === '!' ) { // requires exact match
+                        if (!entry.Senses.some(sense => {
+                            return sense.definition === definitions_search.split('!')[1]
+                        })) {
+                            match = false;
+                            continue;
+                        }
+                    } else if (!entry.Senses.some(sense =>
+                        ["^", sense.definition, "^"]
+                        .join()
+                        .replaceAll(/\s+/g, '^')
+                        .toLowerCase()
+                        .includes(
+                            definitions_search
+                            .replaceAll(/\s+/g, '^')
+                        )
+                    )) {
+                        // searches for inexact match
+                        match = false;
+                        continue;
+                    }
+                }
+
+                // check tags
+                if ( !!tags_search ) {
+                    let tag_search_array = tags_search.split(/\s+/);
+                    for (let tag_search of tag_search_array) {
+                        if (tag_search[0] === '!') { // requires exact match (per tag basis)
+                            if (!entry.Senses.some(sense => sense.tags.some(tag => tag.toLowerCase() === tag_search.split('!')[1]))) {
                                 match = false;
+                                continue;
                             }
-                        });
-                    } else if (!$Language.Lexicon[word].Senses.some(sense => sense.definition.toLowerCase().includes(a))) { 
-                        // no partial match
-                        match = false;
-                    }
-                }
-                if (!!$Language.Lexicon[word].Senses.some(sense => !!sense.tags[0])) {
-                    // has at least one tag
-                    let partial_tag_match = false;
-                    let needs_exact_match = false;
-                    let has_exact_match = false;
-                    for (let tag of $Language.Lexicon[word].Senses.map(sense => sense.tags).flat()) {
-                        for (let a of tags_search) {
-                            // debug.log('`a` | `tag` : ' + a + ' | ' + tag, false)
-                            // tags
-                            if (a[0] === '!') {
-                                needs_exact_match = true;
-                                if (`!${tag}` === a) {
-                                    has_exact_match = true;
-                                    partial_tag_match = true;
-                                }
-                            }
-                            if (`^${tag}^`.includes(a)) {
-                                partial_tag_match = true;
-                            }
+                        } else if ( !entry.Senses.some(sense => sense.tags.some(tag => `^${tag.toLowerCase()}^`.includes(tag_search))) ) { 
+                            // searches for inexact match (per tag basis)
+                            match = false;
+                            continue;
                         }
                     }
-                    if (!!tags_search[0] && ((!partial_tag_match) || (needs_exact_match && !has_exact_match))) {
-                        match = false;
-                    }
-                } else {
-                    // has no tags
-                    if (!!tags_search[0]) {
-                        match = false; // at least one tag as search term
-                    }
                 }
-                if (match) {
+
+                if ( match ) {
                     keys = [...keys, word];
                 }
             }
-            if (!keys.length) keys = [null]; // Search was attempted, no results
+            if (!keys.length) {keys = [null]}; // Search was attempted, no results
         }
     }
 </script>
@@ -273,19 +281,18 @@
     <!-- Header -->
     <div class='container row text-center header'>
         <div class="narrow-col">
-            <label for="case-sensitive" style="margin: auto;">Case Sensitivity</label>
+            <label for="case-sensitive" style="margin: auto;"
+                use:tooltip={{position: 'bottom'}} title="This setting determines whether or not alphabetization is case sensitive."
+            > Case Sensitivity </label>
             <input type="checkbox" style="width: 15px; margin: auto;" id="case-sensitive" bind:checked={$Language.CaseSensitive} />
         </div>
         <div class="narrow-col">
-            <label for="ignore-diacritic" style="margin: auto; text-align: right;">Ignore Diacritics</label>
+            <label for="ignore-diacritic" style="margin: auto; text-align: right;"
+                use:tooltip={{position: 'bottom'}} title="This setting determines whether or not diacritics are taken into account during alphabetization."
+            >Ignore Diacritics</label>
             <input type="checkbox" style="width: 15px; margin: auto;" id="ignore-diacritic" bind:checked={$Language.IgnoreDiacritics}/>
         </div>
         <input id="alph-input" type="text" bind:value={$Language.Alphabet}>
-        <div class="narrow-col">
-            <label for="order-by-timestamp" style="margin: auto; text-align: right;">Order By Most Recent</label>
-            <input type="checkbox" style="width: 15px; margin: auto;" id="order-by-timestamp" bind:checked={$Language.OrderByDate}/>
-        </div>
-
     </div>
     <!-- Body -->
     <div class='row' style="height: 84vh">
@@ -293,7 +300,9 @@
         <div class='container collapsible-column' style='height: 100%'>
             <button class="collapser" on:click={ () => collapsedPanel = !collapsedPanel }></button>
             <div class:collapsed={collapsedPanel} class='text-center scrolled' style="height: 100%; overflow-x: hidden">
-                <label for="wrd-input">New Word</label>
+                <label for="wrd-input"
+                use:tooltip={{position: 'bottom'}} title="Write your new word here in its romanized form."
+                >New Word</label>
                 <input id="wrd-input" type="text"
                     bind:value={$wordInput}
                     on:input={() => {
@@ -302,7 +311,6 @@
                         });
                     }}
                 >
-
                 {#if $Language.UseLects}
                     {#each lectSet as lect}
                         <div class="row narrow">
@@ -310,12 +318,16 @@
                                 <p class="lect">{lect}</p>
                             </div>
                             <div class="column text-left">
-                                <input type="text" class="pronunciation text-left" bind:value={$pronunciations[lect]}/>
+                                <span use:tooltip={{position: 'bottom'}} title={`This field is for the pronunciation of your word in your ${lect} lect. It will auto-populate based on rules you set in the Phonology tab for this lect.`}>
+                                    <input type="text" class="pronunciation text-left" bind:value={$pronunciations[lect]}/>
+                                </span>
                             </div>
                         </div>
                     {/each}
                 {:else}
-                    <input type="text" class="pronunciation" bind:value={$pronunciations.General}/>
+                    <span use:tooltip={{position: 'bottom'}} title="This field is for the pronunciation of your word. It will auto-populate based on rules you set in the Phonology tab.">
+                        <input type="text" class="pronunciation" bind:value={$pronunciations.General}/>
+                    </span>
                 {/if}
                 
                 {#each senses as sense, i}
@@ -330,15 +342,21 @@
                         on:commit={() => { addWord(false); }}
                     />
                 {/each}
-                <button class="hover-highlight hover-shadow" id="add-sense-button" on:click={() => {
-                    senses = [...senses, {definition: '', tags: '', lects: [...$Language.Lects]}];
+                <button class="hover-highlight hover-shadow" id="add-sense-button" 
+                    use:tooltip={{position: 'right'}} title="If this word has unrelated definitions, adding multiple senses is a good way to separate them visually and give them separate sets of tags."
+                    on:click={() => {
+                        senses = [...senses, {definition: '', tags: '', lects: [...$Language.Lects]}];
                 }}>Add Sense</button>
                 {#if !($wordInput in $Language.Lexicon)}
                     <button class="hover-highlight hover-shadow" id="add-word-button" on:click={() => addWord(false)}>Add Word</button>
                 {:else}
                     <div class="row" id="definition-exists">
-                        <button id="overwrite" class="hover-shadow" on:click={() => addWord(false)}>Overwrite Entry</button>
-                        <button id="append" class="hover-shadow hover-highlight" on:click={() => addWord(true)}>Append Definition</button>
+                        <button id="overwrite" class="hover-shadow" 
+                            use:tooltip={{position: 'bottom'}} title="If you want to replace an existing entry with a new one, you can use this button to overwrite it."
+                            on:click={() => addWord(false)}>Overwrite Entry</button>
+                        <button id="append" class="hover-shadow hover-highlight" 
+                            use:tooltip={{position: 'bottom'}} title="If you want to add new sense(s) to an existing word, you can use this button to append your work to the existing entry."
+                            on:click={() => addWord(true)}>Append Definition</button>
                     </div>
                 {/if}
                 <div style="width: 100vw"></div>
@@ -382,7 +400,7 @@
                 {/if}
             </div>
             <div class='scrolled' style="height: 88%">
-                {#each orderedLex as word}
+                {#each alphabetized as word}
                     <LexEntry word={word} source={$Language.Lexicon[word]} showEtymology={true} on:edit={() => editEntry(word)}/>
                 {:else}
                     <p class="info" id="lex-body">Add new words on the left</p>

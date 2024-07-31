@@ -7,6 +7,8 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
+const ffi = require('koffi');
+
 // Auto-updater flags
 autoUpdater.autoDownload = true;
 autoUpdater.allowPrerelease = false;
@@ -54,7 +56,7 @@ const createWindow = () => {
         setTimeout(() => {
             loadingWindow.close();
             mainWindow.show();
-        }, 1000); // give the app a second to load the theme correctly. Otherwise the window flashes white.
+        }, 1000); // give the app a second to load the theme correctly.
     });
     // Set macOS dock icon
     if (process.platform === 'darwin') {
@@ -62,8 +64,6 @@ const createWindow = () => {
         mainWindow.setWindowButtonVisibility(false);
     }
 
-    // This is meant to prevent the app from navigating to external links, only allowing lexicon links.
-    // shell.openExternal() is used to open external links, although it seems to be broken at the moment. 
     const WC = mainWindow.webContents;
     WC.on('will-navigate', function (e, url) {
         if (url.includes('lex::')) {
@@ -119,6 +119,16 @@ const createWindow = () => {
         // Renderer will send back this event when it's done confirming save and/or quit.
         mainWindow = null;
         app.quit();
+    });
+
+    // Interop signature definitions
+    const lib = ffi.load('src/app/utils/interop/library/target/release/liblibrary.dylib');
+    const fns = { // fn name = lib.func(rust fn name, return type, [parameter types])
+        echo: lib.func('echo', 'str', ['str']),
+        graphemify: lib.func('graphemify', 'str', ['str', 'str']),
+    };
+    ipcMain.handle('ffi', (_, name, ...args) => {
+        return fns[name](...args);
     });
 };
 
