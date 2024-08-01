@@ -26,14 +26,14 @@ const createWindow = () => {
         show: true,
         webPreferences: {
             devTools: isDev,
-            nodeIntegration: true, // these two settings are required in order to use
+            nodeIntegration: true,   // these two settings are required in order to use
             contextIsolation: false, // modules such as path and fs in renderer processes.
         },
     });
 
-    if (process.platform === 'darwin') {
+    if (process.platform === 'darwin')
         loadingWindow.setWindowButtonVisibility(false);
-    }
+
     loadingWindow.loadFile(path.join(__dirname, 'loading.html'));
 
     // Create the browser window.
@@ -50,14 +50,16 @@ const createWindow = () => {
             contextIsolation: false, // modules such as path and fs in renderer processes.
         },
     });
-    // Load the index.html of the app.
+
+    // Load index.html
     mainWindow.loadFile(path.join(__dirname, 'index.html'));
     mainWindow.once('ready-to-show', () => {
         setTimeout(() => {
             loadingWindow.close();
             mainWindow.show();
-        }, 1000); // give the app a second to load the theme correctly.
+        }, 1000); // give the app a second to load the theme correctly; strobes otherwise.
     });
+
     // Set macOS dock icon
     if (process.platform === 'darwin') {
         app.dock.setIcon(path.join(__dirname, 'res/alembic-beta.png'));
@@ -69,7 +71,7 @@ const createWindow = () => {
         if (url.includes('lex::')) {
             e.preventDefault();
             WC.send('lexicon link', decodeURI(url).replace('lex::', ''));
-            console.log('Lexicon link clicked: ' + decodeURI(url).replace('lex::', '')); // DEBUG
+            // console.log('Lexicon link clicked: ' + decodeURI(url).replace('lex::', '')); // DEBUG
         } else if (path.basename(url) === 'index.html') {
             e.preventDefault();
         } else if (url != WC.getURL()) {
@@ -80,36 +82,15 @@ const createWindow = () => {
 
     // Even with contextIsolation set to false, there are some things which still require interprocess communication.
     // IPC handlers below.
-    ipcMain.handle('getUserDataPath', () => {
-        let data_path = app.getPath('userData');
-        return data_path;
-    });
-    ipcMain.handle('showOpenDialog', (_, params) => {
-        let file_path = dialog.showOpenDialogSync(params);
-        return file_path;
-    });
-    ipcMain.handle('getVersion', () => {
-        return version;
-    });
-    ipcMain.handle('debug', (_, message) => {
-        console.log(message);
-    });
-    ipcMain.handle('platform', () => {
-        return process.platform;
-    });
-    ipcMain.on('buttonclose', () => {
-        mainWindow.webContents.send('app-close');
-    });
-    ipcMain.on('minimize', () => {
-        mainWindow.minimize();
-    });
-    ipcMain.on('maximize', () => {
-        if (mainWindow.isMaximized()) {
-            mainWindow.unmaximize();
-        } else {
-            mainWindow.maximize();
-        }
-    });
+    ipcMain.handle('getUserDataPath', () => app.getPath('userData'));
+    ipcMain.handle('showOpenDialog', (_, params) => dialog.showOpenDialogSync(params));
+    ipcMain.handle('getVersion', () => version);
+    ipcMain.handle('debug', (_, message) => console.log(message));
+    ipcMain.handle('platform', () => process.platform);
+    ipcMain.on('buttonclose', () => mainWindow.webContents.send('app-close'));
+    ipcMain.on('minimize', () => mainWindow.minimize());
+    ipcMain.on('maximize', () => mainWindow.isMaximized()? mainWindow.unmaximize() : mainWindow.maximize());
+    ipcMain.on('isDev', () => isDev);
 
     mainWindow.on('close', e => {
         mainWindow.webContents.send('app-close');
@@ -122,14 +103,15 @@ const createWindow = () => {
     });
 
     // Interop signature definitions
-    const lib = ffi.load('src/app/utils/interop/library/target/release/liblibrary.dylib');
+    const dylibPath = isDev
+        ? path.resolve(path.join(__dirname, 'app/utils/interop/library/target/release/liblibrary.dylib'))
+        : path.resolve(process.resourcesPath, 'liblibrary.dylib');
+    const lib = ffi.load(dylibPath);
     const fns = { // fn name = lib.func(rust fn name, return type, [parameter types])
         echo: lib.func('echo', 'str', ['str']),
-        graphemify: lib.func('graphemify', 'str', ['str', 'str']),
+        graphemify: lib.func('graphemify', 'str', ['str', 'str', 'str', 'str']),
     };
-    ipcMain.handle('ffi', (_, name, ...args) => {
-        return fns[name](...args);
-    });
+    ipcMain.handle('ffi', (_, name, ...args) => fns[name](...args));
 };
 
 // This method will be called when Electron has finished

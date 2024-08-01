@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { ipcRenderer } = require('electron');
+// import * as fs from 'fs'; // require doesn't give intellisense but import doesn't work and results in cryptic errors.
 const fs = require('fs');
 const path = require('path');
 const vex = require('vex-js');
@@ -15,16 +16,14 @@ import { markdownToHtml } from './markdown';
 const Lang = () => get(Language);
 const Default = get(defaultLanguage);
 import { xata } from '../../db/database';
+import { ok } from 'assert';
 
 /**
 * This function is used to get the user's data path.
 * @param {function (user_path: string): void} callback
 */
 export async function userData (callback: (user_path: string) => void) {
-    let path: string;
-    await ipcRenderer.invoke('getUserDataPath').then(result => {
-        path = result;
-    });
+    let path : string = await ipcRenderer.invoke('getUserDataPath');
     callback(path);
 }
 
@@ -106,11 +105,17 @@ function editorjsToHTML(data: OutputData, container: HTMLElement): HTMLElement {
 }
 
 /**
- * Synchronously eads the SVG out file produced by the Graphemy CLI
- * @returns {string} the contents of the file as a string
+ * Reads the SVG out file produced by the Graphemy CLI.
+ * @returns {Promise<string>} The SVG data as a string.
  */
-export function readSVG (): string {
-    return fs.readFileSync('./out.svg', {encoding: 'utf8', flag: 'r'});
+export async function readSVG(text: string, ortho_name: string): Promise<string> {
+    const cache_path : string = path.resolve(`${await ipcRenderer.invoke('getUserDataPath')}/GraphemyCache/`);
+    if (!fs.existsSync(cache_path)) fs.mkdirSync(cache_path);
+    
+    const file_path : string = path.resolve(cache_path, `${Lang().Name}-${ortho_name}-${text}.svg`)
+    return fs.existsSync(file_path)
+        ? fs.readFileSync(file_path, {encoding: 'utf8', flag: 'r'})
+        : (()=>{console.log(`No SVG found at ${file_path}`); return 'No SVG found.'})();
 }
 
 /**
@@ -118,21 +123,29 @@ export function readSVG (): string {
  * @returns {string} The SVG string with the corrected sizes
  */
 export function correctSVGSize (svg: string): string {
-    //     i        0                   1               2              3
-    // returns [full match, height-width capture, height capture, width capture]
-    const pattern = /<svg (height="([0-9.]+)".*width="([0-9.]+)").*>/im;
-    // This finds the height and width values of the svg, and sets whichever of the two values is smaller
-    // to a target value and adjusts the other to maintain aspect ratio. 
-    // The assumption is that the smaller of the two values represents the line height regardless of writing direction. 
-    const [new_height, new_width] : string[] = (([h, w]: number[], target_size: number) => [
-        w < h? (h / w) * target_size : target_size, // height
-        w < h? target_size : (w / h) * target_size, // width
-    ])(svg.match(pattern).slice(2,).map((v) => Number(v)), 50).map(v => `${v}`);
-    
-    // replace the heights and widths with the newly calculated ones and assign the adjusted string to SVGData
-    return svg.replace(pattern,
-        (match: string, _hw: string, h: string, w: string) => match.replace(h, new_height).replace(w, new_width)
-    );
+    try {
+        ok(!(svg === 'No SVG found.'), svg);
+
+        //     i        0                   1               2              3
+        // returns [full match, height-width capture, height capture, width capture]
+        const pattern = /<svg (height="([0-9.]+)".*width="([0-9.]+)").*>/im;
+        // This finds the height and width values of the svg, and sets whichever of the two values is smaller
+        // to a target value and adjusts the other to maintain aspect ratio. 
+        // The assumption is that the smaller of the two values represents the line height regardless of writing direction. 
+        const [new_height, new_width] : string[] = (([h, w]: number[], target_size: number) => [
+            w < h? (h / w) * target_size : target_size, // height
+            w < h? target_size : (w / h) * target_size, // width
+        ])(svg.match(pattern).slice(2,).map(v => Number(v)), 50).map(v => `${v}`);
+        
+        // replace the heights and widths with the newly calculated ones and assign the adjusted string to SVGData
+        return svg.replace(pattern,
+            (match: string, _hw: string, h: string, w: string) => match.replace(h, new_height).replace(w, new_width)
+        );
+
+    } catch (err) {
+        if (err.message !== 'No SVG Found.') console.log('Error message:\n', err);
+        return `<code>${err}</code>`;
+    }
 }
 
 /**

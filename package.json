@@ -6,7 +6,7 @@
   "main": "src/index.js",
   "scripts": {
     "compile-rust": "cargo build --manifest-path=src/app/utils/interop/library/Cargo.toml --release",
-    "precompile": "npm run compile-rust && sass src/sass/:src/styles && rollup -c",
+    "precompile": "npm run compile-rust && sass -q src/sass/:src/styles && rollup -c",
     "start": "npm run precompile && electron .",
     "build-mac": "npm run precompile && electron-builder --mac --publish never",
     "build-win": "npm run precompile && electron-builder --win --x64 --ia32 --publish never",
@@ -41,8 +41,24 @@
       "installerHeaderIcon": "src/res/alembic-beta.ico"
     },
     "files": [
-      "src/**/*",
-      "node_modules/**/*"
+      "./src/**/*",
+      "./LICENSE",
+      "./README.md"
+    ],
+    "extraResources": [
+      {
+        "from": "./src/app/utils/interop/library/target/release/liblibrary.dylib",
+        "to": "liblibrary.dylib",
+        "filter": [
+            "**/*"
+          ] 
+      }, {
+        "from": "./src/app/utils/interop/library/src/graphemy",
+        "to": "graphemy",
+        "filter": [
+            "**/*"
+          ]
+      }
     ],
     "directories": {
       "output": "dist"

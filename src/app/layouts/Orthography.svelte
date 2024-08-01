@@ -17,7 +17,12 @@
     let graphemyOutput: string = '';
 
     // IIFE here re-reads SVG data on load and every time `graphemyOutput` is updated.
-    $: graphemyOutput, (() => SVGData = correctSVGSize(readSVG()))();
+    $: graphemyOutput, (async () => {
+        SVGData = correctSVGSize(await readSVG(
+            testInput,
+            $Language.Orthographies.find(o => o.name === selectedOrtho)?.name,
+        ))
+    })();
 
     /**
      * Binding directly to the Language store seems to be very slow, so this function is used to
@@ -173,7 +178,8 @@
                             (() => {
                                 const settings = parseRules($Language.Orthographies.find(o => o.name === selectedOrtho)?.rules || '');
                                 return applyRules(settings.rules, testInput, settings.categories);
-                            })()
+                            })(),
+                            $Language.Orthographies.find(o => o.name === selectedOrtho)?.name,
                         );
                     }}>Generate SVG</button>
                     <br>

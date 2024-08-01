@@ -1,3 +1,6 @@
+/* Lexicanter, a constructed language organization app.
+   Copyright (C) 2023 Ethan Ray.
+   See GNU General Public License Version 3.  */
 body {
   color: rgb(92, 31, 94);
   background-color: rgb(114, 60, 116);
@@ -432,8 +435,5 @@ table {
     transform: rotate(180deg);
   }
 }
-/* Lexicanter, a constructed language organization app.
-   Copyright (C) 2023 Ethan Ray.
-   See GNU General Public License Version 3.  */
 
 /*# sourceMappingURL=wisteria.css.map */

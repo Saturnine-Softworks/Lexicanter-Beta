@@ -220,13 +220,13 @@
             <div class="row">
                 <div class="column search-container">
                     {#if !searchPhrase}
-                         <label for="search-phrase" style="position: absolute; top: .5em; left: 1em">Search by phrase…</label>
+                        <label for="search-phrase" style="position: absolute; top: .5em; left: 1em">Search by phrase…</label>
                     {/if}
                     <input id="search-phrase" type="text" class="search" bind:value={searchPhrase}/>
                 </div>
                 <div class="column search-container">
                     {#if !searchTags}
-                         <label for="search-tags" style="position: absolute; top: .5em; left: 1em">Search by tags…</label>
+                        <label for="search-tags" style="position: absolute; top: .5em; left: 1em">Search by tags…</label>
                     {/if}
                     <input id="search-tags" type="text" class="search" bind:value={searchTags}/>
                 </div>
@@ -239,16 +239,16 @@
                     <input id="search-description" type="text" class="search" bind:value={searchDescription}/>
                 </div>
                 {#if $Language.UseLects}
-                     <div class="column">
-                         <label>Filter by lect:
-                             <select bind:value={lectFilter}>
-                                 <option value=''>All</option>
-                                 {#each $Language.Lects as lect}
-                                     <option value={lect}>{lect}</option>
-                                 {/each}
-                             </select>
-                         </label>
-                     </div>
+                    <div class="column">
+                        <label>Filter by lect:
+                            <select bind:value={lectFilter}>
+                                <option value=''>All</option>
+                                {#each $Language.Lects as lect}
+                                    <option value={lect}>{lect}</option>
+                                {/each}
+                            </select>
+                        </label>
+                    </div>
                 {/if}
             </div>
             <!-- Book -->

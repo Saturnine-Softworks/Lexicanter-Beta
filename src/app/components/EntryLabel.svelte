@@ -8,10 +8,14 @@
     export let word: string;
     export let source: Word | Phrase | Variant;
 
-    async function getSVG(text:string, file_path: string) {
-        let graphemy_output = await graphemify(file_path, text);
-        console.log("Grapemy CLI Output:\n", graphemy_output);
-        return correctSVGSize(readSVG());
+    async function getSVG(text:string, file_path: string, ortho_name: string): Promise<String> {
+        let svg = await readSVG(text, ortho_name);
+        if (svg === 'No SVG found.') {
+            let graphemy_output = await graphemify(file_path, text, ortho_name);
+            // console.log("Grapemy CLI Output:\n", graphemy_output);
+            svg = await readSVG(text, ortho_name);
+        }
+        return correctSVGSize(svg);
     }
 </script>
 {#if $Language.Orthographies.find(o => o.name === 'Romanization').display}
@@ -20,7 +24,7 @@
 {#each $Language.Orthographies as ortho}
     {#if ortho.name !== 'Romanization' && ortho.display && (ortho.root === 'rom' || (ortho.lect in source.pronunciations))}
         {#if ortho.typesetter === 'graphemy'}
-            {#await getSVG(word, ortho.font)}
+            {#await getSVG(word, ortho.font, ortho.name)}
                 <p class=info><i>generating...</i></p>
             {:then svg} 
                 <div>

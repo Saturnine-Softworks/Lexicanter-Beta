@@ -39,26 +39,38 @@ pub extern "C" fn echo(call: *const c_char) -> *const u8 {
 /// Handles reading and converting string types, and replies with the output message from
 /// the Graphemy CLI.
 #[no_mangle]
-pub extern "C" fn graphemify(file: *const c_char, text: *const c_char) -> *const u8 {
-    let (file_str, text_str) = (
+pub extern "C" fn graphemify(
+    file: *const c_char, 
+    text: *const c_char,
+    output_path: *const c_char,
+    graphemy_bin_path: *const c_char
+) -> *const u8 {
+    let (
+        file_str, 
+        text_str, 
+        output_path_str,
+        graphemy_bin_path_str
+    ) = (
         j_to_r_str!(file),
-        j_to_r_str!(text)
+        j_to_r_str!(text),
+        j_to_r_str!(output_path),
+        j_to_r_str!(graphemy_bin_path)
     );
-    let output = generate_svg(file_str, text_str, true);
+    let output = generate_svg(file_str, text_str, output_path_str, true, graphemy_bin_path_str);
     r_to_j_str!(output)
 }
 
 /// Runs the graphemy CLI typeset command to generate an SVG file, given file name and input text
-pub fn generate_svg(file: String, text: String, called_from_afar: bool) -> String {
+pub fn generate_svg(file: String, text: String, output_path: String, called_from_afar: bool, graphemy_bin_path: String) -> String {
     // When this is called from the JS side, the working directory is the top of the application.
     // To get to this folder, need to prepend ./src/app/utils/interop/library/src/
     let bin_location = match called_from_afar {
-        true  => "./src/app/utils/interop/library/src/graphemy",
+        true  => &graphemy_bin_path,
         false => "./src/graphemy"
     };
 
     let output = Command::new(bin_location)
-        .args(["typeset", "--lang", &file, "from-arg", &text])
+        .args(["typeset", "--lang", &file, "--out", &output_path, "from-arg", &text])
         .output()
         .expect("failed to execute graphemy typeset command");
 

@@ -1,6 +1,12 @@
 <script lang='ts'>
-    const [MAJOR, MINOR, PATCH] = [0, 1, 2];
+    const [MAJOR, MINOR, PATCH, PRERELEASE] = [0, 1, 2, 3];
     const changelog = {
+        '2.2.0': {
+            type: PRERELEASE,
+            notes: [
+                'Graphemy Integration: You can now use your Graphemy typesetter files as sources for an orthography.',
+            ]
+        },
         '2.1.19': {
             type: PATCH,
             notes: [
@@ -305,7 +311,7 @@
             
             <br><hr/><br>
             {#each Object.keys(changelog) as version}
-                <p><u>{['Overhaul', 'Update', 'Patch'][changelog[version].type]} {version}</u></p>
+                <p><u>{['Overhaul', 'Update', 'Patch', 'Pre-release'][changelog[version].type]} {version}</u></p>
                 <p style='width: 70%; margin: auto; text-align: left; line-height: 1.6'>
                     {#each changelog[version].notes as note}
                         • {@html note} <br>
