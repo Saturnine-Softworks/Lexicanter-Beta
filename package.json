@@ -23,7 +23,7 @@
       "vPrefixedTagName": false
     },
     "appId": "com.lexicanterbeta.app",
-    "productName": "Lexicanter",
+    "productName": "Lexicanter-Beta",
     "win": {
       "target": "nsis",
       "icon": "src/res/alembic-beta.ico"
