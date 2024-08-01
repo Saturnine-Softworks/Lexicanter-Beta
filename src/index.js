@@ -87,10 +87,10 @@ const createWindow = () => {
     ipcMain.handle('getVersion', () => version);
     ipcMain.handle('debug', (_, message) => console.log(message));
     ipcMain.handle('platform', () => process.platform);
+    ipcMain.handle('isDev', () => isDev);
     ipcMain.on('buttonclose', () => mainWindow.webContents.send('app-close'));
     ipcMain.on('minimize', () => mainWindow.minimize());
     ipcMain.on('maximize', () => mainWindow.isMaximized()? mainWindow.unmaximize() : mainWindow.maximize());
-    ipcMain.on('isDev', () => isDev);
 
     mainWindow.on('close', e => {
         mainWindow.webContents.send('app-close');
