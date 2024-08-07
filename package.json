@@ -1,13 +1,16 @@
 {
   "name": "lexicanterbeta",
   "productName": "Lexicanter-Beta",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "A lexicon management tool for constructed languages.",
   "main": "src/index.js",
   "scripts": {
     "compile-rust": "cargo build --manifest-path=src/app/utils/interop/library/Cargo.toml --release",
-    "precompile": "npm run compile-rust && sass -q src/sass/:src/styles && rollup -c",
-    "start": "npm run precompile && electron .",
+    "precompile": "npm run compile-rust && sass -q src/sass/:src/styles && vite build",
+    "dev": "NODE_ENV=development concurrently \"npm run web:watch\" \"npm run electron:start\"",
+    "start": "npm run precompile && npm run electron:start",
+    "web:watch": "vite --port 3000",
+    "electron:start": "electron .",
     "build-mac": "npm run precompile && electron-builder --mac --publish never",
     "build-win": "npm run precompile && electron-builder --win --x64 --ia32 --publish never",
     "build-linux": "npm run precompile && electron-builder --linux --publish never",
@@ -50,14 +53,15 @@
         "from": "./src/app/utils/interop/library/target/release/liblibrary.dylib",
         "to": "liblibrary.dylib",
         "filter": [
-            "**/*"
-          ] 
-      }, {
+          "**/*"
+        ]
+      },
+      {
         "from": "./src/app/utils/interop/library/src/graphemy",
         "to": "graphemy",
         "filter": [
-            "**/*"
-          ]
+          "**/*"
+        ]
       }
     ],
     "directories": {
@@ -93,11 +97,8 @@
     "vex-js": "^4.1.0"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^24.0.1",
-    "@rollup/plugin-node-resolve": "^15.0.1",
-    "@rollup/plugin-terser": "^0.4.0",
-    "@rollup/plugin-typescript": "^11.0.0",
     "@svelte-plugins/tooltips": "^0.1.6",
+    "@sveltejs/vite-plugin-svelte": "^3.1.1",
     "@tsconfig/svelte": "^3.0.0",
     "@types/node": "^18.13.0",
     "@types/wicg-file-system-access": "^2020.9.5",
@@ -106,15 +107,11 @@
     "electron": "=22.2.1",
     "electron-builder": "^24.13.3",
     "eslint": "^8.35.0",
-    "rollup": "~2.79.1",
-    "rollup-plugin-css-only": "^4.3.0",
-    "rollup-plugin-livereload": "^2.0.5",
-    "rollup-plugin-polyfill-node": "^0.12.0",
-    "rollup-plugin-svelte": "^7.1.2",
-    "svelte": "^3.55.1",
+    "svelte": "^4.2.18",
     "svelte-check": "^3.0.3",
     "svelte-preprocess": "^5.0.1",
     "tslib": "^2.5.0",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "vite": "^5.3.5"
   }
 }

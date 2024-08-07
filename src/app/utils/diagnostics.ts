@@ -1,7 +1,6 @@
 import type * as Lexc from '../types';
 import { Language } from '../stores';
 import { get } from 'svelte/store';
-import { platform } from 'os';
 const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
@@ -26,7 +25,7 @@ export function logError(action: string, error: Error): void {
     get(Language).Diagnostics.push(<Lexc.Diagnostic> {
         Time: Date(),
         Version: get(Language).Version,
-        OS: platform(),
+        OS: process.platform,
         Action: action,
         Error: error.stack
     });
@@ -42,7 +41,7 @@ export function logAction(action: string): void {
     get(Language).Diagnostics.push(<Lexc.Diagnostic> {
         Time: Date(),
         Version: get(Language).Version,
-        OS: platform(),
+        OS: process.platform,
         Action: action
     });
 }

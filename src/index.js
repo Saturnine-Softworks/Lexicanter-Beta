@@ -51,8 +51,15 @@ const createWindow = () => {
         },
     });
 
-    // Load index.html
-    mainWindow.loadFile(path.join(__dirname, 'index.html'));
+    if (process.env.NODE_ENV !== 'development') {
+        // Load production build
+        mainWindow.loadFile(`${__dirname}/entry.html`);
+    } else {
+        // Load vite dev server page 
+        console.log('Development mode');
+        mainWindow.loadURL('http://localhost:3000/');
+    }
+
     mainWindow.once('ready-to-show', () => {
         setTimeout(() => {
             loadingWindow.close();

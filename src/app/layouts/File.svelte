@@ -17,9 +17,6 @@
     const vex = require('vex-js');
 
     let locationSelector: HTMLInputElement;
-    onMount(() => {
-        locationSelector.webkitdirectory = true;
-    });
     function selectSaveLocation () {
         showOpenDialog({
             properties: ['openDirectory'],
@@ -457,7 +454,7 @@
                     <button on:click={openFile} class="hover-highlight hover-shadow">Open…</button>
                     <p class="info">Save your lexicon or open a previously saved one.</p>
                 </div>
-                <div class=column> 
+                <div class=column>
                     <div class=milkyWay>
                         <!-- Loader -->
                         <div class=sun></div>

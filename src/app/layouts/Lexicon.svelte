@@ -9,7 +9,6 @@
     import { debug } from '../utils/diagnostics';
     const vex = require('vex-js');
     import { tooltip } from '@svelte-plugins/tooltips';
-    import { join } from 'path';
 
     ipcRenderer.on('update-lexicon-for-gods-sake-please', () => {
         $Language.Lexicon = {...$Language.Lexicon};

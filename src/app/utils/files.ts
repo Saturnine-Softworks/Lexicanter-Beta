@@ -16,14 +16,13 @@ import { markdownToHtml } from './markdown';
 const Lang = () => get(Language);
 const Default = get(defaultLanguage);
 import { xata } from '../../db/database';
-import { ok } from 'assert';
 
 /**
 * This function is used to get the user's data path.
 * @param {function (user_path: string): void} callback
 */
 export async function userData (callback: (user_path: string) => void) {
-    let path : string = await ipcRenderer.invoke('getUserDataPath');
+    const path : string = await ipcRenderer.invoke('getUserDataPath');
     callback(path);
 }
 
@@ -112,10 +111,10 @@ export async function readSVG(text: string, ortho_name: string): Promise<string>
     const cache_path : string = path.resolve(`${await ipcRenderer.invoke('getUserDataPath')}/GraphemyCache/`);
     if (!fs.existsSync(cache_path)) fs.mkdirSync(cache_path);
     
-    const file_path : string = path.resolve(cache_path, `${Lang().Name}-${ortho_name}-${text}.svg`)
+    const file_path : string = path.resolve(cache_path, `${Lang().Name}-${ortho_name}-${text}.svg`);
     return fs.existsSync(file_path)
         ? fs.readFileSync(file_path, {encoding: 'utf8', flag: 'r'})
-        : (()=>{console.log(`No SVG found at ${file_path}`); return 'No SVG found.'})();
+        : (()=>{console.log(`No SVG found at ${file_path}`); return 'No SVG found.';})();
 }
 
 /**
@@ -124,7 +123,9 @@ export async function readSVG(text: string, ortho_name: string): Promise<string>
  */
 export function correctSVGSize (svg: string): string {
     try {
-        ok(!(svg === 'No SVG found.'), svg);
+        if (svg === 'No SVG found.') {
+            throw new Error(svg);
+        }
 
         //     i        0                   1               2              3
         // returns [full match, height-width capture, height capture, width capture]

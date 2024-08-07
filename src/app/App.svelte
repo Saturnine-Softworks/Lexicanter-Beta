@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang=ts>
     const { ipcRenderer } = require('electron');
     const vex = require('vex-js');
     vex.registerPlugin(require('vex-dialog'));

@@ -3,7 +3,6 @@
     import { get_pronunciation, writeRomans, complete_word, generate_word } from '../utils/phonetics';
     import { tooltip } from '@svelte-plugins/tooltips';
     import type { AdvancedPhonotactics } from "../types";
-    import { TransformStreamDefaultController } from "node:stream/web";
     let trial = ''; let ortho_test = '';
     function setInStone (event: Event) {
         const target = event.target as HTMLInputElement;

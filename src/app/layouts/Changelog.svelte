@@ -1,6 +1,12 @@
 <script lang='ts'>
     const [MAJOR, MINOR, PATCH, PRERELEASE] = [0, 1, 2, 3];
     const changelog = {
+        '2.2.1': {
+            type: PRERELEASE,
+            notes: [
+                'Lots of changes under the hood to make this thing work with Vite...and <i>hopefully</i> speed up my development cycle.',
+            ]
+        },
         '2.2.0': {
             type: PRERELEASE,
             notes: [
