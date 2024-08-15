@@ -51,7 +51,7 @@
             <textarea 
                 rows="1"
                 bind:value={tags}
-            />  
+            ></textarea>  
             <TagSelector on:select = {
                 e => tags += e.detail
                     ? tags

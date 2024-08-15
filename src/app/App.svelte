@@ -11,13 +11,12 @@
 	import File from './layouts/File.svelte';
 	import Settings from './layouts/Settings.svelte';
     import Changelog from './layouts/Changelog.svelte';
-    import { theme, autosave, selectedTab, Language, referenceLanguage } from './stores';
-    import { saveFile } from './utils/files'
+    import { theme, autosave, selectedTab, Language } from './stores';
+    import { saveFile } from './utils/files';
     import * as diagnostics from './utils/diagnostics'
     import Inflection from './layouts/Inflection.svelte';
     import Orthography from './layouts/Orthography.svelte';
     import Wiki from './layouts/Wiki.svelte';
-    import Reference from './layouts/Reference.svelte';
 
     // Debug block
     $: {
@@ -58,16 +57,16 @@
 <body id="body" spellcheck="false">
     <div class='tab-container'>
         <div class="row">
-            <div class="column" style={$referenceLanguage? 'width: 66%' : 'width: 100%'}>
+            <div class="column" style={'width: 100%'}>
                 <p class="window-control">
                     <button class="hover-highlight close material-icons" on:click={() => ipcRenderer.send('buttonclose')}>close</button>
                     <button class="hover-highlight minimize material-icons" on:click={() => ipcRenderer.send('minimize')}>remove</button>
                     <button class="hover-highlight maximize material-icons" on:click={() => ipcRenderer.send('maximize')}>fullscreen</button>
                 </p>
                 <div class="button-container">
-                    {#if !$referenceLanguage}
-                        <p class="version-info">β{version}-{platform} —</p>
-                    {/if}
+
+                    <p class="version-info">β{version}-{platform} —</p>
+
                     {#each tab_btns as tab, i}
                         {#if (tab !== 'Etymology' && tab !== 'Inflection' && tab !== 'Orthography')
                             || (tab === 'Etymology' && $Language.ShowEtymology)
@@ -93,13 +92,6 @@
                     </div>
                 {/each}
             </div>
-
-            {#if $referenceLanguage}
-                <div class="column tab-pane reference" style="width: 33%">
-                    <Reference/>
-                </div>
-            {/if}
-
         </div>
     </div>
 </body>

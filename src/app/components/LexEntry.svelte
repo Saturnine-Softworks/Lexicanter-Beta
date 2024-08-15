@@ -1,4 +1,3 @@
-<svelte:options immutable/>
 <script lang="ts">
     import { Language } from '../stores';
     import type { Word } from '../types';
@@ -15,6 +14,14 @@
     export let source: Word;
     export let showEtymology: boolean;
     export let showInflections: boolean = false;
+    /**
+     * This function checks that two arrays contain all of the same values, regardless of index.
+     * It's used to check whether or not to display the Lects lists multiple times. 
+     */
+    function compareArrays(arr1: any[], arr2: any[]): boolean {
+        if (arr1.length !== arr2.length) return false;
+        return arr1.every((val, i) => arr2.includes(val));
+    }
 
     function getAncestors(): string {
         const ancestors: string[][] = [];
@@ -22,7 +29,7 @@
         let maxDepth = 6;
         while (Object.keys($Language.Etymologies)
             .some(
-                word => 
+                word =>
                 $Language.Etymologies[word].descendants
                     .some(descendant => currents.includes(descendant.name))
             ) && maxDepth
@@ -63,7 +70,8 @@
         entryAncestors = getAncestors();
     }
 </script>
-<div id='{word}' class="lex-entry prelined" on:contextmenu={edit}>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div id='{word}' class="lex-entry prelined" oncontextmenu={edit}>
     <EntryLabel {word} {source} />
     <Pronunciations pronunciations={ source.pronunciations }/>
     {#each source.Senses as Sense, i}
@@ -75,14 +83,14 @@
                 <div class='tag-item'>{tag}</div>
             {/if}
         {/each}
-        {#if $Language.UseLects}        
+        {#if $Language.UseLects && !compareArrays(Sense.lects, Array.from(Object.keys(source.pronunciations)))}        
             <p class="lect">
                 {Sense.lects.join(', ')}
             </p>
         {/if}
         <p style='margin-bottom: -1em'>{@html markdownToHtml(Sense.definition)}</p>
         {#if $Language.ShowInflection || showInflections}
-            <Inflections {word} tags={Sense.tags} readFromReference={showInflections}/>
+            <Inflections {word} tags={Sense.tags} />
         {/if}
         {#if $Language.ShowEtymology && !!entryAncestors && showEtymology}
             <div class='tag-item'>etymology</div>

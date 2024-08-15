@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang=ts>
     import { theme, autosave, pronunciations, wordInput, dbid, dbkey, fileLoadIncrement, docsEditor } from '../stores';
     import { userData, saveFile, showOpenDialog, retrieveFromDatabase } from '../utils/files';
     import { Language } from '../stores';
@@ -15,13 +15,13 @@
     let tag: string = '';
     let onlineFileVersion: string = '';
     let localFileVersion: string = $Language.FileVersion;
-    async function getOnlineFileVersion() {
+    async function getOnlineFileVersion(): Promise<string> {
         if (verifyHash($dbid, $dbkey)) {
             let file = await retrieveFromDatabase();
             if (file) {
                 return file.FileVersion;
-            } else return null;
-        }
+            } else return 'No such file in database.';
+        } else return 'Invalid key';
     }
     async function setFileVersions() {
         onlineFileVersion = await getOnlineFileVersion();
@@ -54,8 +54,6 @@
 
             if (fs.existsSync(user_path + path.sep + 'theme.txt')) {
                 settings.theme = fs.readFileSync(user_path + path.sep + 'theme.txt', 'utf8')
-                    .readFileSync(user_path + path.sep + 'theme.txt', 'utf8')
-                    .toString();
                 $theme = settings.theme;
                 fs.unlinkSync(user_path + path.sep + 'theme.txt');
             } else {
@@ -150,18 +148,18 @@
             return;
         }
         let contents = await file.text();
-        let theme_path;
+        let theme_path: string;
         await userData(user_path => {
             let themes_dir = user_path + path.sep + 'user_themes' + path.sep;
             if (!fs.existsSync(themes_dir)) {
                 fs.mkdirSync(themes_dir);
             }
             theme_path = user_path + path.sep + 'user_themes' + path.sep + file.name;
-            fs.writeFile(theme_path, contents, 'utf8', err => {
+            fs.writeFile(theme_path, contents, 'utf8', (err: any) => {
                 if (err) throw err;
                 $theme = theme_path;
             });
-            fs.writeFile(user_path + path.sep + 'theme.txt', theme_path, err => {
+            fs.writeFile(user_path + path.sep + 'theme.txt', theme_path, (err: any) => {
                 if (err) throw err;
             });
         });
@@ -181,13 +179,14 @@
         userData(user_path => {
             fs.writeFileSync(user_path + path.sep + 'settings.json', JSON.stringify(settings, null, 4));
         });
+        let autosave_tracker: number | undefined;
         if ($autosave) {
-            var autosave_tracker = window.setInterval(
+            autosave_tracker = window.setInterval(
                 saveFile,
                 600000 /* 10 minutes */,
                 false
             );
-        } else {
+        } else if (autosave_tracker) {
             window.clearInterval(autosave_tracker);
         };
     };
@@ -227,15 +226,15 @@
             })
         });
         Object.keys($Language.Phrasebook).forEach(category => {
-            Object.keys($Language.Phrasebook[category]).forEach((p: string, i: number) => {
-                const phrase = $Language.Phrasebook[category][p];
+            Object.keys($Language.Phrasebook[category]).forEach((phraseKey: string, _index: number) => {
+                const phrase = $Language.Phrasebook[category][phraseKey];
                 if (phrase.pronunciations.hasOwnProperty(lect)) {
                     phrase.pronunciations[name] = phrase.pronunciations[lect];
                     delete phrase.pronunciations[lect];
                 }
                 if (phrase.lects.includes(lect)) {
-                    $Language.Phrasebook[category][p].lects.splice(phrase.lects.indexOf(lect), 1);
-                    $Language.Phrasebook[category][p].lects.push(name);
+                    $Language.Phrasebook[category][phraseKey].lects.splice(phrase.lects.indexOf(lect), 1);
+                    $Language.Phrasebook[category][phraseKey].lects.push(name);
                 }
             })
         });
@@ -251,8 +250,8 @@
         delete $Language.Pronunciations[lect];
     }
 
-    function deleteLect (lect: string, i: number) {
-        $Language.Lects.splice(i, 1);
+    function deleteLect (lect: string, lectIndex: number) {
+        $Language.Lects.splice(lectIndex, 1);
         $Language.Lects = [...$Language.Lects];
         delete $Language.Pronunciations[lect];
         delete $pronunciations[lect]
@@ -260,26 +259,26 @@
             if ($Language.Lexicon[word].pronunciations[lect]) {
                 delete $Language.Lexicon[word].pronunciations[lect];
             }
-            $Language.Lexicon[word].Senses.forEach((sense: Lexc.Sense, i: number) => {
+            $Language.Lexicon[word].Senses.forEach((sense: Lexc.Sense, senseIndex: number) => {
                 if (sense.lects.includes(lect)) {
                     sense.lects.splice(sense.lects.indexOf(lect), 1);
                 }
                 if (!sense.lects) {
-                    $Language.Lexicon[word].Senses.splice(i, 1);
+                    $Language.Lexicon[word].Senses.splice(senseIndex, 1);
                 }
             })
         });
         Object.keys($Language.Phrasebook).forEach(category => {
-            Object.keys($Language.Phrasebook[category]).forEach((p: string, i: number) => {
-                const phrase = $Language.Phrasebook[category][p];
+            Object.keys($Language.Phrasebook[category]).forEach((phraseKey: string, _phraseIndex: number) => {
+                const phrase = $Language.Phrasebook[category][phraseKey];
                 if (phrase.pronunciations[lect]) {
                     delete phrase.pronunciations[lect];
                 }
                 if (phrase.lects.includes(lect)) {
-                    $Language.Phrasebook[category][p].lects.splice(phrase.lects.indexOf(lect), 1);
+                    $Language.Phrasebook[category][phraseKey].lects.splice(phrase.lects.indexOf(lect), 1);
                 }
                 if (!phrase.lects) {
-                    const {[p]: _, ...rest} = $Language.Phrasebook[category];
+                    const {[phraseKey]: _, ...rest} = $Language.Phrasebook[category];
                     $Language.Phrasebook[category] = rest;
                 }
             })
@@ -337,7 +336,7 @@
                 },
                 file_path => {
                     if (!file_path) return;
-                    fs.readFile(file_path[0], 'utf8', (err, data: string) => {
+                    fs.readFile(file_path[0], 'utf8', (err: any, data: string) => {
                         if (err) {
                             console.log(err);
                             vex.dialog.alert('There was an issue loading your file. Please contact the developer.');
@@ -483,9 +482,9 @@
                 {#if !!tag}
                     <button class="hover-highlight hover-shadow" on:click={()=>{
                         Object.keys($Language.Lexicon).forEach(word => {
-                            $Language.Lexicon[word].Senses.forEach((sense, i) => {
+                            $Language.Lexicon[word].Senses.forEach((sense, senseIndex) => {
                                 if (sense.tags.includes(tag)) {
-                                    $Language.Lexicon[word].Senses[i].tags.splice(sense.tags.indexOf(tag), 1);
+                                    $Language.Lexicon[word].Senses[senseIndex].tags.splice(sense.tags.indexOf(tag), 1);
                                 }
                             });
                         });
@@ -494,13 +493,13 @@
                     <button class="hover-highlight hover-shadow" on:click={()=>{
                         vex.dialog.prompt({
                             message: 'New tag name:',
-                            callback: (newName) => {
+                            callback: (newName: string) => {
                                 if (newName) {
                                     Object.keys($Language.Lexicon).forEach(word => {
-                                        $Language.Lexicon[word].Senses.forEach((sense, i) => {
+                                        $Language.Lexicon[word].Senses.forEach((sense, senseIndex) => {
                                             if (sense.tags.includes(tag)) {
-                                                $Language.Lexicon[word].Senses[i].tags.splice(sense.tags.indexOf(tag), 1);
-                                                $Language.Lexicon[word].Senses[i].tags.push(newName);
+                                                $Language.Lexicon[word].Senses[senseIndex].tags.splice(sense.tags.indexOf(tag), 1);
+                                                $Language.Lexicon[word].Senses[senseIndex].tags.push(newName);
                                             }
                                         });
                                     });
@@ -528,7 +527,7 @@
                                 };
                                 vex.dialog.confirm({
                                     message: `Are you sure you want to delete the lect "${lect}"? This action cannot be undone.`,
-                                    callback: function (response) {
+                                    callback: function (response: boolean) {
                                         if (response) {
                                             deleteLect(lect, lectIndex);
                                             debug.log(`Deleted lect: ${lect}`);
@@ -540,7 +539,7 @@
                                 vex.dialog.prompt({
                                     message: 'Edit Lect Name',
                                     placeholder: `${lect}`,
-                                    callback: function (response) {
+                                    callback: function (response: string | false) {
                                         if (response === false) {
                                             return debug.log('User cancelled the Edit Lect Name dialog.');
                                         }
@@ -551,8 +550,8 @@
                             }}> ✎ </button>
                             <button class="hover-highlight hover-shadow" style="display: inline-block;" on:click={() => {
                                 vex.dialog.confirm({
-                                    message: `Add all words in the lexicon to the lect ‘${lect}’?`,
-                                    callback: function (response) {
+                                    message: `Add all words in the lexicon to the lect '${lect}'?`,
+                                    callback: function (response: boolean) {
                                         if (response) {
                                             for (let word in $Language.Lexicon) {
                                                 $Language.Lexicon[word].Senses.forEach(sense => {
@@ -562,7 +561,7 @@
                                                 });
                                             };
                                             debug.log(`Added all words to lect: ${lect}`);
-                                            vex.dialog.alert(`Added all senses of all words to the lect ‘${lect}’.`);
+                                            vex.dialog.alert(`Added all senses of all words to the lect '${lect}'.`);
                                         }
                                     }
                                 });
@@ -573,7 +572,7 @@
                         vex.dialog.prompt({
                             message: 'Add a New Lect',
                             placeholder: `New ${$Language.Name} Lect`,
-                            callback: function (response) {
+                            callback: function (response: string | false) {
                                 if (response === false) {
                                     return debug.log('User cancelled the Add Lect dialog.');
                                 }
@@ -605,7 +604,7 @@
                             <button class="hover-highlight hover-shadow" style="display: inline-block;" on:click={() => {
                                 vex.dialog.confirm({
                                     message: `Are you sure you want to delete "${relative}"? This will remove any etymology connections its entries may have.`,
-                                    callback: function (response) {
+                                    callback: function (response: any) {
                                         if (response) {
                                             $Language.Etymologies = Object.fromEntries(Object.entries($Language.Etymologies).filter(([_, value]) => value.source !== relative));
                                             delete $Language.Relatives[relative];

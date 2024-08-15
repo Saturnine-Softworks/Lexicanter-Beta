@@ -1,5 +1,4 @@
-<svelte:options immutable/>
-<script lang='ts'>
+<script lang=ts>
     import { Language } from '../stores';
     import { parseRules, applyRules } from '../utils/sca';
     import type { Word, Phrase, Variant } from '../types';
@@ -12,13 +11,14 @@
         let svg = await readSVG(text, ortho_name);
         if (svg === 'No SVG found.') {
             let graphemy_output = await graphemify(file_path, text, ortho_name);
-            // console.log("Grapemy CLI Output:\n", graphemy_output);
+            // console.debug("Grapemy CLI Output:\n", graphemy_output);
             svg = await readSVG(text, ortho_name);
         }
         return correctSVGSize(svg);
     }
 </script>
-{#if $Language.Orthographies.find(o => o.name === 'Romanization').display}
+<!--                                                              type checker gymnastics      -->
+{#if ($Language.Orthographies.find(o => o.name === 'Romanization') || {display: false}).display }
         <p style="font-style: italic">{word}</p>
 {/if}
 {#each $Language.Orthographies as ortho}

@@ -1,4 +1,3 @@
-<svelte:options immutable/>
 <script lang='ts'>
     import { createEventDispatcher } from "svelte";
     import { draw, blur } from 'svelte/transition';
@@ -36,6 +35,7 @@
 <svg {width} {height}>
     <g>
         {#each tree.parents as parent, i}
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <g on:mousedown={() => {
                 select(parent.name)
             }}>
@@ -76,6 +76,7 @@
             > { tree.name } </text>
         </g>
         {#each tree.children as child, i}
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <g on:mousedown={() => {
                 select(child.name)
             }}>

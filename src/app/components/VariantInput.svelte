@@ -2,14 +2,14 @@
     import { createEventDispatcher } from 'svelte';
     import { Language } from '../stores';
     import { get_pronunciation } from '../utils/phonetics';
-
+    import type * as Lexc from '../types';
     export let phrase = '';
     export let description = '';
     export let lects: string[];
-    export let pronunciations = {};
+    export let pronunciations: Lexc.EntryPronunciations = {};
     $: {
         lects.forEach(lect => {
-            pronunciations[lect] = get_pronunciation(phrase, lect);
+            pronunciations[lect].ipa = get_pronunciation(phrase, lect);
         })
     }
 

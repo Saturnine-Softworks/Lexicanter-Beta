@@ -69,7 +69,7 @@
         let word = '';
 
         // SECTION: Helper function
-        const checkForIllegals = (word: string) => {
+        const checkForIllegals = (word: string): string => {
             for (let illegal of $Language.AdvancedPhonotactics.Illegals) {
                 if (word.includes(illegal) && illegal !== '') {
                     if (recursion <= 20) {
@@ -108,10 +108,8 @@
                 enabled_constructs = enabled_constructs.concat(construct.structures.split(/\s+/g));
             }
         }
-
         // select a random construct
         const construct = enabled_constructs[Math.floor(Math.random() * enabled_constructs.length)];
-
         // parse the construct
         let symbols = construct.split('');
         let syllables: string[][] = new Array(symbols.length).fill([]);

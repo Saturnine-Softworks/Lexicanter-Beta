@@ -16,7 +16,7 @@
     let phraseKeys: string[] = [];
     let collapsedPanel = false;
     let phraseDescription = ''
-    let variantInputs = [];
+    let variantInputs: {phrase: string, pronunciations: Lexc.EntryPronunciations, description: string}[] = [];
     let lects = [...$Language.Lects];
     let tags = '';
 
@@ -81,7 +81,7 @@
         $phraseInput = phrase;
         $categoryInput = $selectedCategory;
         $phrasePronunciations = (() => {
-            let pronunciations = {};
+            let pronunciations: {[index: string]: string} = {};
             Object.keys($Language.Phrasebook[$selectedCategory][phrase].pronunciations).forEach(lect => {
                 pronunciations[lect] = $Language.Phrasebook[$selectedCategory][phrase].pronunciations[lect].ipa;
             });
@@ -111,8 +111,8 @@
         variantInputs = [...variantInputs, {
             phrase: '',
             pronunciations: (()=>{
-                let pronunciations = {};
-                lects.forEach(lect => pronunciations[lect] = '');
+                let pronunciations: Lexc.EntryPronunciations = {};
+                lects.forEach(lect => pronunciations[lect] = {ipa: '', irregular: false});
                 return pronunciations;
             })(),
             description: '',
@@ -130,7 +130,7 @@
         if (!description) return;
         let category = $categoryInput.trim();
         if (!category) return
-        let pronunciations = {};
+        let pronunciations: Lexc.EntryPronunciations = {};
         console.log($phrasePronunciations, lects);
         Object.keys($phrasePronunciations).filter(lect => lects.includes(lect)).forEach(lect => {
             console.log(lect)
@@ -148,7 +148,7 @@
                 tags: tags.split(/\s+/g),
                 description: description,
                 variants: (()=>{
-                    let variants = {};
+                    let variants: {[index: string]: Lexc.Variant} = {};
                     for (const variant of variantInputs) {
                         const phrase = variant.phrase.trim();
                         if (!phrase) continue;
@@ -157,14 +157,14 @@
                         let pronunciations: Lexc.EntryPronunciations = {};
                         Object.keys(variant.pronunciations).forEach(lect => {
                             pronunciations[lect] = {
-                                ipa: variant.pronunciations[lect].trim(),
-                                irregular: variant.pronunciations[lect].trim() !== get_pronunciation(phrase, lect),
+                                ipa: variant.pronunciations[lect].ipa.trim(),
+                                irregular: variant.pronunciations[lect].ipa.trim() !== get_pronunciation(phrase, lect),
                             };
                         });
-                        variants[phrase] = <Lexc.Variant> {
+                        variants[phrase] = {
                             pronunciations: pronunciations,
                             description: description,
-                        };
+                        } satisfies Lexc.Variant;
                     };
                     return variants;
                 })(),
@@ -174,7 +174,7 @@
             $Language = {...$Language};
             $phraseInput = '';
             $phrasePronunciations = (()=>{
-                let pronunciations = {};
+                let pronunciations: Lexc.Pronunciations = {};
                 Object.keys($Language.Pronunciations).forEach(lect => {
                     pronunciations[lect] = '';
                 });
@@ -207,6 +207,7 @@
             <hr />
             <div class="column scrolled" style="max-height: 90%;" id="category-body">
                 {#each Object.keys($Language.Phrasebook) as category}
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div class="lex-entry capitalize" class:selected={category === $selectedCategory} on:mousedown={() => select(category)}>
                             {category}
                     </div>
@@ -316,7 +317,7 @@
                         bind:description={variantInputs[i].description}
                         on:update={() => {
                             lects.forEach(lect => {
-                                variantInputs[i].pronunciations[lect] = get_pronunciation(variantInputs[i].phrase, lect);
+                                variantInputs[i].pronunciations[lect].ipa = get_pronunciation(variantInputs[i].phrase, lect);
                             });
                         }}
                     />

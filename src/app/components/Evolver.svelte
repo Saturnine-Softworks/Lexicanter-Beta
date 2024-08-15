@@ -1,5 +1,5 @@
 <script lang='ts'>
-    import { Language, defaultLanguage, referenceLanguage, docsEditor } from '../stores';
+    import { Language, defaultLanguage, docsEditor } from '../stores';
     import { parseRules, applyRules } from '../utils/sca';
     import { saveFile } from '../utils/files';
     import Etymology from '../layouts/Etymology.svelte';
@@ -29,11 +29,11 @@
                     </label>
                 {/if}
             </label>
-            <textarea rows=5 class=text-left bind:value={soundChanges}/>
+            <textarea rows=5 class=text-left bind:value={soundChanges}></textarea>
         </label>
         <label>Test Changes
-            <textarea rows=3 bind:value={testChanges}/>
-            <textarea rows=3 class=pronunciation value={soundChange(testChanges)} readonly/>
+            <textarea rows=3 bind:value={testChanges}></textarea>
+            <textarea rows=3 class=pronunciation value={soundChange(testChanges)} readonly></textarea>
         </label>
     </div>
     <div class=column>
@@ -48,10 +48,6 @@
                 }
                 saveFile();
                 window.setTimeout(() =>{
-                    // Open the old language in the reference panel
-                    if ($referenceLanguage) $referenceLanguage = false;
-                    $referenceLanguage = structuredClone($Language);
-    
                     const newLanguage = structuredClone($defaultLanguage);
                     newLanguage.Name = newName;
                     newLanguage.ShowEtymology = true;
@@ -101,7 +97,7 @@
                         });
                     });
     
-                    $docsEditor.destroy(); initializeDocs(false);
+                    $docsEditor.destroy(); initializeDocs();
                     $Language = newLanguage;
     
                     saveFile();

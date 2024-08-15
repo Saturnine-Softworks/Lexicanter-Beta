@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Language, selectedCategory, referenceLanguage } from '../stores';
+    import { Language, selectedCategory } from '../stores';
     import { createEventDispatcher } from 'svelte';
     import Pronunciations from './Pronunciations.svelte';
     import EntryLabel from './EntryLabel.svelte';
@@ -8,14 +8,11 @@
     const dispatch = createEventDispatcher();
     const edit = () => dispatch('edit')
     export let phrase = '';
-    let refLanguage = $referenceLanguage as Lexc.Language;
-    $: refLanguage = $referenceLanguage as Lexc.Language;
-    export let reference = false;
-    export let refCat = '';
-    const language = () => reference? refLanguage : $Language;
-    const category = () => reference? refCat : $selectedCategory;
+    const language = () => $Language;
+    const category = () => $selectedCategory;
 
 </script>
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="lex-entry" id={phrase} on:contextmenu={edit}>
     <EntryLabel word={phrase} source={language().Phrasebook[category()][phrase]}/>
     <Pronunciations pronunciations={language().Phrasebook[category()][phrase].pronunciations} />

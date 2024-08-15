@@ -1,5 +1,5 @@
 <script lang='ts'>
-    import { Language, referenceLanguage } from '../stores';
+    import { Language } from '../stores';
     import { alphabetize } from '../utils/alphabetize';
     import { debug } from '../utils/diagnostics';
     import type * as Lexc from '../types';
@@ -14,7 +14,7 @@
     $: filtered_lex = keys.reduce((acc, key) => {
         if (key in $Language.Lexicon) acc[key] = $Language.Lexicon[key];
         return acc;
-    }, {});
+    }, {} as Lexc.Lexicon);
     let alphabetized: string[];
     $: { // Update the alphabetized lexicon when the alphabet or `keys` array changes
         $Language.Alphabet;
@@ -40,8 +40,8 @@
             filteredExternal = keys.reduce((acc, key) => {
                 if (key in lexicon) acc[key] = lexicon[key];
                 return acc;
-            }, {})
-            externalAlphabetized = alphabetize(!!keys.length? filteredExternal : lexicon);
+            }, {} as Lexc.Lexicon);
+            externalAlphabetized = alphabetize(!!keys.length ? filteredExternal : lexicon);
         })();
     }
 
@@ -104,8 +104,8 @@
     $: {
         selectedEntry; $Language.Etymologies;
         tree = createTreeData();
-        width = window.innerWidth * .82 * ($referenceLanguage? .66 : 1);
-        height = window.innerHeight * .47
+        width = window.innerWidth * .82;
+        height = window.innerHeight * .47;
     };
 </script>
 
@@ -128,6 +128,7 @@
             <p>⦓ <i>Internal</i> ⦔</p>
             <div class='column scrolled' style='max-height: 40%'>
                 {#each alphabetized as entry}
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div class='lex-entry' class:selected={entry === selectedEntry}
                         on:mousedown={() => {
                             selectedEntry = entry;
@@ -147,6 +148,7 @@
             <p>⦔ <i>External</i> ⦓</p>
             <div class='column scrolled' style='max-height: 40%'>
                 {#each externalAlphabetized as entry}
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div class='lex-entry' class:selected={entry === selectedEntry} 
                         on:mousedown={() => { selectedEntry = entry; }}
                     > {entry} </div>
@@ -160,20 +162,27 @@
         <div class='container column' style='height: 94vh'>
             <div class='scrolled' style='max-height:100%'>
                 {#if !!selectedEntry}
-                     <Tree
-                         {tree}
-                         {width}
-                         {height}
-                         on:select={e => selectedEntry = e.detail}
-                     />
+                    <Tree
+                        {tree}
+                        {width}
+                        {height}
+                        on:select={e => selectedEntry = e.detail}
+                    />
                     {#if selectedEntry in $Language.Lexicon}
                         <LexEntry word={selectedEntry} source={$Language.Lexicon[selectedEntry]} showEtymology={false}/>
                     {:else if Object.entries($Language.Relatives).some(([_, lex]) => Object.keys(lex).includes(selectedEntry))}
-                        <LexEntry 
-                            word={selectedEntry} 
-                            source={$Language.Relatives[ Object.entries($Language.Relatives).find(([_, lex]) => Object.keys(lex).includes(selectedEntry))[0] ][selectedEntry]}
-                            showEtymology={false}
-                        />
+                        {#if Object.entries($Language.Relatives).some(([_, lex]) => Object.keys(lex).includes(selectedEntry))}
+                            {@const relativeEntry = Object.entries($Language.Relatives).find(([_, lex]) => Object.keys(lex).includes(selectedEntry))}
+                            {#if relativeEntry}
+                            <!-- separate if-block with const to ensure type safety - 
+                                    typescript can't infer types within the attribute expressions of a component -->
+                                <LexEntry 
+                                    word={selectedEntry} 
+                                    source={$Language.Relatives[relativeEntry[0]][selectedEntry]}
+                                    showEtymology={false}
+                                />
+                            {/if}
+                        {/if}
                     {/if}
                 {:else}
                     <p class='info'>Select an entry from the left to view and edit its etymology.</p>

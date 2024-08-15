@@ -1,18 +1,17 @@
 <script lang='ts'>
-    import { Language, hideDropdowns, referenceLanguage } from "../stores";
+    import { Language, hideDropdowns } from "../stores";
     import * as diagnostics from "../utils/diagnostics";
     import { blur } from 'svelte/transition';
     import * as sca from "../utils/sca";
     import type { OutputBlockData } from "@editorjs/editorjs";
     export let word: string;
     export let tags: string[];
-    export let readFromReference: boolean = false;
     let show = false;
 
-    function htmlToText(html: string) {
+    function htmlToText(html: string):string {
         const temp = document.createElement('div');
         temp.innerHTML = html;
-        return temp.textContent;
+        return temp.textContent as string;
     }
 
     let data: OutputBlockData[][];
@@ -20,7 +19,7 @@
     $: {
         word; tags; $Language.Inflections; $Language.Lexicon;
         let categories = '';
-        data = structuredClone((readFromReference && typeof $referenceLanguage === 'object')? $referenceLanguage.Inflections : $Language.Inflections)
+        data = structuredClone($Language.Inflections)
             .filter(inflection => {
                 let filter: RegExp;
                 try {
@@ -43,7 +42,7 @@
                     row.forEach((cell: string, x: number) => {
                         const rules = sca.parseRules(htmlToText(cell)).rules;
                         const cats = sca.parseRules(categories).categories;
-                        if (!rules[0]) return
+                        if (!rules[0]) return;
                         data[i][j].data.content[y][x] = sca.applyRules(rules, word, cats);
                     });
                 });
@@ -62,13 +61,15 @@
                 {/if}
                 {#if block.type === 'table'}
                     <table style='margin: auto'>
-                        {#each block.data.content as row}
-                            <tr>
-                                {#each row as cell}
-                                    <td>{@html cell}</td>
-                                {/each}
-                            </tr>
-                        {/each}
+                        <tbody>
+                            {#each block.data.content as row}
+                                <tr>
+                                    {#each row as cell}
+                                        <td>{@html cell}</td>
+                                    {/each}
+                                </tr>
+                            {/each}
+                        </tbody>
                     </table>
                 {/if}
                 {#if block.type === 'paragraph'}
