@@ -33,11 +33,8 @@ export async function userData (callback: (user_path: string) => void) {
 * @param {any} params
 * @param {function} callback
 */
-export async function showOpenDialog (params, callback: (path: string) => void) {
-    let path: string;
-    await ipcRenderer.invoke('showOpenDialog', params).then((result: string) => {
-        path = result;
-    });
+export async function showOpenDialog (params: {[index:string]: any}, callback: (path: string) => void) {
+    const path: string = await ipcRenderer.invoke('showOpenDialog', params);
     callback(path);
 }
 
@@ -136,7 +133,8 @@ export function correctSVGSize (svg: string): string {
         const [new_height, new_width] : string[] = (([h, w]: number[], target_size: number) => [
             w < h? (h / w) * target_size : target_size, // height
             w < h? target_size : (w / h) * target_size, // width
-        ])(svg.match(pattern).slice(2,).map(v => Number(v)), 50).map(v => `${v}`);
+        // The purpose of this vvvvvvvvvvv bit is to convince typescript that we never try to run .map() on `null`
+        ])((svg.match(pattern) || ['null']).slice(2,).map((v:string) => Number(v)), 50).map(v => `${v}`);
         
         // replace the heights and widths with the newly calculated ones and assign the adjusted string to SVGData
         return svg.replace(pattern,
@@ -144,7 +142,8 @@ export function correctSVGSize (svg: string): string {
         );
 
     } catch (err) {
-        if (err.message !== 'No SVG Found.') console.log('Error message:\n', err);
+        const error = err instanceof Error? err : Error(String(err));
+        if (error.message !== 'No SVG Found.') console.log('Error message:\n', error);
         return `<code>${err}</code>`;
     }
 }
@@ -235,8 +234,7 @@ export async function saveFile () {
 */ 
 export const saveAs = {
     lexc: async () => {
-        let exports: Blob;
-        collectExportData().then(jsonString => {exports = new Blob([jsonString]);});
+        const exports = new Blob([await collectExportData()]);
         const file_handle = await window.showSaveFilePicker({
             suggestedName: `${Lang().Name}.lexc`,
         });
@@ -255,7 +253,14 @@ export const saveAs = {
         let export_data = '';
         const $lexicon = Lang().Lexicon;
         for (const word in $lexicon) {
-            export_data += `${word}\n${$lexicon[word][0]}\n${$lexicon[word][1]}\n\n`;
+            export_data += `${word}\n`;
+            $lexicon[word].Senses.forEach(sense => {
+                export_data += 
+                    (sense.tags? `Tags: ${sense.tags.join(', ')}` : '') + '\n'
+                    + ((sense.lects.length > 1 || sense.lects[0] !== 'General')? `Lects: ${sense.lects.join(' ')}` : '') + '\n'
+                    + sense.definition + '\n';
+
+            });
         }
         const exports = new Blob([export_data]);
                             
@@ -274,7 +279,7 @@ export const saveAs = {
     },
     csv: async () => {
         const $lexicon = Lang().Lexicon;
-        const array_to_csv = (data) => {
+        const array_to_csv = (data: string[][]) => {
             return data.map(row => row
                 .map(String) // convert every value to String
                 .map((v: string) => v.replaceAll('"', '""')) // escape double colons
@@ -308,8 +313,7 @@ export const saveAs = {
         window.alert('The file exported successfully.');
     },
     json: async () => {
-        let export_data: Blob;
-        collectExportData().then(jsonString => {export_data = new Blob([jsonString]);});
+        const export_data = new Blob([await collectExportData()]);
                                 
         const file_handle = await window.showSaveFilePicker({
             suggestedName: `${Lang().Name}.json`,
@@ -530,7 +534,7 @@ export const openLegacy = {
     /**
     * This function can open 1.9 - 1.11 files.
     */
-    1.9: (contents) => {
+    1.9: (contents: any) => {
         Language.set(Default);
         try {
             for (const key in contents.Lexicon) {
@@ -549,19 +553,22 @@ export const openLegacy = {
                 };
             }
         } catch (err) {
+            const error = err instanceof Error? err : Error(String(err));
             window.alert('There was a problem loading the contents of the lexicon. Please contact the developer.');
-            diagnostics.logError('Attempted to load a version 1.9 lexicon.', err);
+            diagnostics.logError('Attempted to load a version 1.9 lexicon.', error);
         }
         try { Lang().Alphabet = contents.Alphabet; } catch (err) {
+            const error = err instanceof Error? err : Error(String(err));
             window.alert('There was a problem loading the alphabetical order. Please contact the developer for assistance.');
-            diagnostics.logError('Attempted to load a version 1.9 alphabet.', err);
+            diagnostics.logError('Attempted to load a version 1.9 alphabet.', error);
         }
         try {
             Lang().Pronunciations.General = contents.Romanization;
             writeRomans('General');
         } catch (err) {
+            const error = err instanceof Error? err : Error(String(err));
             window.alert('There was a problem loading the romanizations. Please contact the developer for assistance.');
-            diagnostics.logError('Attempted to load version 1.9 romanizations.', err);
+            diagnostics.logError('Attempted to load version 1.9 romanizations.', error);
         }
         try { 
             for (const key in contents.Phrasebook) {
@@ -599,8 +606,9 @@ export const openLegacy = {
                 })();
             }
         } catch (err) {
+            const error = err instanceof Error? err : Error(String(err));
             window.alert('There was a problem loading the phrasebook. Please contact the developer for assistance.');
-            diagnostics.logError('Attempted to load a version 1.9 phrasebook.', err);
+            diagnostics.logError('Attempted to load a version 1.9 phrasebook.', error);
         }
         try {
             Lang().Phonotactics.General.Onsets = contents.Phonotactics.Initial.join(' ');
@@ -609,19 +617,22 @@ export const openLegacy = {
             Lang().Phonotactics.General.Vowels = contents.Phonotactics.Vowel.join(' ');
             Lang().Phonotactics.General.Illegals = contents.Phonotactics.Illegal.join(' ');
         } catch (err) {
+            const error = err instanceof Error? err : Error(String(err));
             window.alert('There was a problem loading the phonotactics data. Please contact the developer for assistance.');
-            diagnostics.logError('Attempted to load version 1.9 phonotactics.', err);
+            diagnostics.logError('Attempted to load version 1.9 phonotactics.', error);
         }
         try { 
             get(docsEditor).destroy();
             initializeDocs(contents.Docs); 
         } catch (err) {
+            const error = err instanceof Error? err : Error(String(err));
             window.alert('There was a problem loading the documentation data. Please contact the developer for assistance.');
-            diagnostics.logError('Attempted to load version 1.9 documentation.', err);
+            diagnostics.logError('Attempted to load version 1.9 documentation.', error);
         }
         try { Lang().HeaderTags = contents.HeaderTags; } catch (err) {
+            const error = err instanceof Error? err : Error(String(err));
             window.alert('There was a problem loading the header tags.');
-            diagnostics.logError('Attempted to load version 1.9 header tags.', err);
+            diagnostics.logError('Attempted to load version 1.9 header tags.', error);
         }
         Lang().IgnoreDiacritics = contents.IgnoreDiacritics;
         Lang().CaseSensitive = contents.CaseSensitive;
@@ -637,7 +648,7 @@ const csv = require('csv-parser');
 * @param {number} definitions The column number of the definitions.
 */
 export async function importCSV(headers: boolean, words: number, definitions: number, pronunciations: number|false, tags: number|false) {
-    const data = [];
+    const data: string[][] = [];
     let file_path: string;
     words -= 1;
     definitions -= 1;
@@ -660,7 +671,7 @@ export async function importCSV(headers: boolean, words: number, definitions: nu
                     headers: false,
                     skipLines: headers? 1 : 0,
                 }))
-                .on('data', (row) => {
+                .on('data', (row: string[]) => {
                     data.push(row);
                 })
                 .on('end', () => {
@@ -700,7 +711,7 @@ export async function retrieveFromDatabase(name = Lang().Name): Promise<Lexc.Lan
     }
 }
 
-const overridesCSS = `
+const overridesCSS = /* css */ `
     @import url("https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:ital,wght@0,4000,7001,4001,700&display=swap");
     body {
         overflow-y: auto;
@@ -814,9 +825,9 @@ const overridesCSS = `
             font-size: 18pt !important;
         }
     }
-    `;
-                            
-const indexCSS = `
+`;
+
+const indexCSS = /* css */ `
     @charset "UTF-8";
     html, body {
         align-items: center;
@@ -1463,6 +1474,4 @@ const indexCSS = `
     }
     
     /*# sourceMappingURL=index.css.map */
-    
-    `;
-                            
+`;

@@ -19,12 +19,12 @@ export function alphabetize(lexicon: Lexc.Lexicon): string[] {
     const $ignore_diacritics = Lang().IgnoreDiacritics;
     const $case_sensitive = Lang().CaseSensitive;
     const all_words = structuredClone(lexicon);
-    const tag_ordered_lexes = [];
+    const tag_ordered_lexes: string[][] = [];
     for (const tag of priority_tags) {
         tag_ordered_lexes.push([]);
         for (const word in all_words) {
             if ((():string[] => {
-                const tags = [];
+                const tags: string[] = [];
                 all_words[word].Senses.forEach((sense: Lexc.Sense) => {
                     tags.push(...sense.tags);
                 });
@@ -37,7 +37,7 @@ export function alphabetize(lexicon: Lexc.Lexicon): string[] {
             delete all_words[w];
         }
     }
-    const remaining_words = [];
+    const remaining_words: string[] = [];
     for (const w in all_words) {
         remaining_words.push(w);
     }
@@ -51,10 +51,10 @@ export function alphabetize(lexicon: Lexc.Lexicon): string[] {
         (a, b) => b.length - a.length
     ); // descending, ensures uniqueness
 
-    const final_sort = [];
+    const final_sort: string[] = [];
     for (const group of tag_ordered_lexes) {
-        const lex = {};
-        const list = [];
+        const lex: { [key: string]: (string | number)[] } = {};
+        const list: (string | number)[][] = [];
         for (const word of group) {
             // case sensitivity
             let w: string = $case_sensitive? word : word.toLowerCase();
@@ -69,32 +69,30 @@ export function alphabetize(lexicon: Lexc.Lexicon): string[] {
                 );
             }
             const append: (string | number)[] = w.split('.');
-            for (const i of append) {
-                append[append.indexOf(i)] = +i || 0;
+            for (let i = 0; i < append.length; i++) {
+                append[i] = +append[i] || 0;
             }
             lex[word] = append;
             list.push(append);
         }
-        list.sort((a, b) => {
-            for (const i of a) {
-                const j = b[a.indexOf(i)];
-                if (i === j) {
+        list.sort((wordA: (string | number)[], wordB: (string | number)[]) => {
+            for (let index = 0; index < wordA.length; index++) {
+                const charCodeA = wordA[index];
+                const charCodeB = wordB[index];
+                if (charCodeA === charCodeB) {
                     continue;
                 }
-                return i - j;
+                return (charCodeA as number) - (charCodeB as number);
             }
             return 0;
         });
-        const sorted = [];
+        const sorted: [string, number][] = [];
         for (const key in lex) {
             sorted.push([key, list.indexOf(lex[key])]);
         } // [ [word, index], [word, index], ...]
         sorted.sort((a, b) => a[1] - b[1]);
         for (let i = 0; i < sorted.length; i++) {
-            sorted[i] = sorted[i][0];
-        }
-        for (const i of sorted) {
-            final_sort.push(i);
+            final_sort.push(sorted[i][0]);
         }
     }
     return final_sort;

@@ -79,10 +79,10 @@ function applyRule(rule: string, input: string, categories: {[index: string]: st
     const subCatMap = sub.split('').filter(char => char in categories);
     const contextCatMap = context.split('').filter(char => char in categories);
 
-    function getSlice(match): string {
+    function getSlice(match: string): string {
         //SECTION - Get the index of the pattern in the context, accounting for varying category token lengths
         let expandedContext = context.replaceAll('\\b', '');
-        let matchContext = [];
+        let matchContext: [string, RegExpMatchArray | null][] = [];
         if (contextCatMap.length > 0) {
             contextCatMap.forEach(symbol => {
                 const matchMatches = match.match(new RegExp(`(?:${categories[symbol].join('|')})`, flags));
@@ -91,14 +91,21 @@ function applyRule(rule: string, input: string, categories: {[index: string]: st
             matchContext = [...new Set(matchContext)].sort((a, b) => b.length - a.length);
         }
         matchContext.forEach(([symbol, matches]) => {
-            matches.forEach(match => {
+            matches?.forEach(match => {
                 expandedContext = expandedContext.replace(symbol, match);
             });
         });
-
+        // Replace all '\s' with actual spaces for easier processing
         expandedContext = expandedContext.replaceAll('\\s', ' ');
-        for (const m of expandedContext.match(/\(\?:(.*)\)\?/g)? expandedContext.match(/\(\?:(.*)\)\?/g) : []) {
-            const optional = m.replace(/\(\?:(.*)\)\?/g, '$1');
+
+        // Match all optional groups in the format (?:...)?
+        // The '?' after '.*' makes the match non-greedy to handle nested groups
+        const optionalMatches = expandedContext.match(/\(\?:(.*?)\)\?/g) || [];
+
+        for (const m of optionalMatches) {
+            // Extract the content inside the optional group
+            const optional = m.replace(/\(\?:(.*?)\)\?/, '$1');
+
             /* console.log(
                 'm:', `'${m}'`, '|',
                 'optional:', `'${optional}'`
@@ -115,7 +122,9 @@ function applyRule(rule: string, input: string, categories: {[index: string]: st
                 expandedContext = expandedContext.replace(m, '');
             }
         }
-        for (const m of expandedContext.match(/(.|\s)\?/g)? expandedContext.match(/(.|\s)\?/g) : []) {
+        // Match optional characters (any character followed by '?') in the expanded context
+        // If no matches are found, use an empty array to avoid null
+        for (const m of expandedContext.match(/(.|\s)\?/g) ?? []) {
             const optional = m.replace(/(.|\s)\?/g, '$1');
             const testContext = expandedContext.replace(m, optional);
             let testRegString = '(' + testContext.replace('_', `)${pattern}(`) + ')';
@@ -159,7 +168,7 @@ function applyRule(rule: string, input: string, categories: {[index: string]: st
     }
 
     //SECTION - Apply the rule
-    const matches: string[] = input.match(new RegExp(regString, flags));
+    const matches = input.match(new RegExp(regString, flags));
     if (matches && sub.includes('_')) {
         matches.forEach(match => {
             const slice = getSlice(match);
@@ -186,7 +195,7 @@ function applyRule(rule: string, input: string, categories: {[index: string]: st
                                 .some( (value: string) => 
                                     value === slice && patternCatMap.includes(symbol) 
                                 )
-                            )
+                            ) ?? ''  // Provide a default empty string if undefined
                         )
                     ]
                 ];
@@ -218,7 +227,7 @@ function applyRule(rule: string, input: string, categories: {[index: string]: st
 }
 
 let indialog = false;
-export function applyRules(rules: string[], input: string, categories): string {
+export function applyRules(rules: string[], input: string, categories: { [index: string]: string[]; }): string {
     let result = input;
     rules.forEach(rule => {
         try {
@@ -272,11 +281,13 @@ export function parseRules(rules: string): {rules: string[], categories: {[index
 }
 
 
-/* const rules = `
-a > e / {a, b}_{a}
-`;
+const test = /* ts */ `
+const rules = \`
+    a > e / {a, b}_{a}
+\`;
 const input = 'aaa';
 console.log(
     input, '-->',
     applyRules(parseRules(rules).rules, input, parseRules(rules).categories),
-); */
+)`;
+// eval(test);

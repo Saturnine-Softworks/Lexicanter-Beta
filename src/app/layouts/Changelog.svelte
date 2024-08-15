@@ -1,6 +1,6 @@
 <script lang='ts'>
     const [MAJOR, MINOR, PATCH, PRERELEASE] = [0, 1, 2, 3];
-    const changelog = {
+    const changelog: {[key: string]: {type: number, notes: string[]}} = {
         '2.2.1': {
             type: PRERELEASE,
             notes: [

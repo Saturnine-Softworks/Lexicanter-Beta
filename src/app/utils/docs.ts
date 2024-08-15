@@ -1,5 +1,5 @@
 import { docsEditor } from '../stores';
-import EditorJS, { type OutputData } from '@editorjs/editorjs';
+import EditorJS, { type EditorConfig, type OutputData } from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import Paragraph from '@editorjs/paragraph';
 import Table from '@editorjs/table';
@@ -21,7 +21,7 @@ export class Monospace { // EditorJS custom class
         return 'cdx-monospace';
     }
 
-    constructor({ api }) {
+    constructor({ api }: { api: any }) {
         this.api = api;
         this.button = null;
         this.tag = 'CODE';
@@ -40,7 +40,7 @@ export class Monospace { // EditorJS custom class
         this.button.classList.add(this.api.styles.inlineToolButton);
         return this.button;
     }
-    surround(range) {
+    surround(range: Range) {
         if (!range) {
             return;
         }
@@ -54,7 +54,7 @@ export class Monospace { // EditorJS custom class
         }
     }
     // Wrap selection with term-tag
-    wrap(range) {
+    wrap(range: Range) {
         const m = document.createElement(this.tag);
         m.classList.add(Monospace.CSS);
         /** SurroundContent throws an error if the Range splits a non-Text node with only one of its boundary points
@@ -68,33 +68,46 @@ export class Monospace { // EditorJS custom class
         this.api.selection.expandToTag(m);
     }
     // Unwrap term-tag
-    unwrap(termWrapper) {
+    unwrap(termWrapper: HTMLElement) {
         // Expand selection to all term-tag
         this.api.selection.expandToTag(termWrapper);
 
         const sel = window.getSelection();
-        const range = sel.getRangeAt(0);
-        const unwrappedContent = range.extractContents();
-    
-        // Remove empty term-tag
-        termWrapper.parentNode.removeChild(termWrapper);
-    
-        // Insert extracted content
-        range.insertNode(unwrappedContent);
-    
-        // Restore selection
-        sel.removeAllRanges();
-        sel.addRange(range);
+        if (sel) {
+            const range = sel.getRangeAt(0);
+            const unwrappedContent = range.extractContents();
+        
+            // Remove empty term-tag
+            if (termWrapper.parentNode) {
+                termWrapper.parentNode.removeChild(termWrapper);
+            }
+        
+            // Insert extracted content
+            range.insertNode(unwrappedContent);
+        
+            // Restore selection
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
     }
     checkState() {
         const termTag = this.api.selection.findParentTag(this.tag, Monospace.CSS);
-        this.button.classList.toggle(this.iconClasses.active, !!termTag);
+        if (this.button) {
+            this.button.classList.toggle(this.iconClasses.active, !!termTag);
+        }
     }
     static get sanitize() {
         return {
             code: {
                 class: Monospace.CSS,
             },
+        };
+    }
+
+    static get toolbox() {
+        return {
+            icon: 'M',
+            title: 'Monospace'
         };
     }
 }
@@ -106,42 +119,24 @@ export class Monospace { // EditorJS custom class
  * will be initialized with an empty document.
  * @param {Object} data
  */
-export function initializeDocs(data: OutputData | false, holder='docs-tab'): void {
-    const config = {
-        holder: holder,
-        data: null,
+export function initializeDocs(data: OutputData | null = null, holder = 'docs-tab'): void {
+    const config: Partial<EditorConfig> = {
+        holder,
         tools: {
             underline: Underline,
-            monospace: Monospace,
-            header: {
-                class: Header,
+            monospace: {
+                class: Monospace,
                 inlineToolbar: true,
             },
-            paragraph: {
-                class: Paragraph,
-                inlineToolbar: true,
-                config: {
-                    placeholder:
-                    'This panel can be used to document and describe your languge’s features in greater detail.',
-                },
-            },
-            table: {
-                class: Table,
-                inlineToolbar: true,
-                config: {
-                    rows: 3,
-                    cols: 3,
-                    withHeadings: true,
-                },
-            },
+            header: Header,
+            paragraph: Paragraph,
+            table: Table,
         },
         logLevel: LogLevels.ERROR,
-        readOnly: holder === 'ref-docs'
+        readOnly: holder === 'ref-docs',
     };
-    
+
     if (data) config.data = data;
     const editor = new EditorJS(config);
-    if (holder === 'docs-tab') {
-        docsEditor.set(editor);
-    }
+    if (holder === 'docs-tab') docsEditor.set(editor);
 }

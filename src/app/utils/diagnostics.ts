@@ -7,10 +7,7 @@ const path = require('path');
 
 // can't import this from utils/files because it causes a circular dependency
 async function userData (callback: (user_path: string) => void): Promise<void> {
-    let path: string;
-    await ipcRenderer.invoke('getUserDataPath').then((result: string) => {
-        path = result;
-    });
+    const path = await ipcRenderer.invoke('getUserDataPath');
     callback(path);
 }
 
@@ -46,7 +43,7 @@ export function logAction(action: string): void {
     });
 }
 
-function logToFile(message: string, report: 'info' | 'warning' | 'error'): void {
+function logToFile(message: string | undefined, report: 'info' | 'warning' | 'error'): void {
     userData(userPath => {
         const logsPath = userPath + path.sep + 'Diagnostics' + path.sep;
         if (!fs.existsSync(logsPath)) {
@@ -89,7 +86,7 @@ export const debug = {
         ipcRenderer.invoke('debug', formatted);
         console.log(formatted);
     },
-    error: (message: string, logFile = true) => {
+    error: (message: string | undefined, logFile = true) => {
         if (logFile) logToFile(message, 'error');
         const formatted = '\x1B[22m\x1B[4mLexc Debug\x1B[24m\x1B[22m ' + '\x1B[31m' + message + '\x1B[39m';
         ipcRenderer.invoke('debug', formatted);

@@ -108,7 +108,5 @@ export const fileLoadIncrement = writable(0);
 
 export const hideDropdowns = writable(false);
 
-export const referenceLanguage: Writable<Lexc.Language>|Writable<boolean> = writable(false);
-
 export const dbid = writable(''); 
 export const dbkey = writable('');

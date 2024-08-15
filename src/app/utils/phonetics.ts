@@ -63,9 +63,9 @@ export function writeRomans (lect: string) {
  * @param {string} trial
  * @returns {string} The completed word, or an empty string if no word could be generated
  */
-export function complete_word(trial) {
-    const random_boolean = () => Math.floor(Math.random() * 2) === 0;
-    const choice = arr => arr[Math.floor(Math.random() * arr.length)];
+export function complete_word(trial: string): string {
+    const random_boolean = (): boolean => Math.floor(Math.random() * 2) === 0;
+    const choice = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const inventory = {
         Onsets: Lang().Phonotactics.General.Onsets.split(/\s+/g),
         Medials: Lang().Phonotactics.General.Medials.split(/\s+/g), 
@@ -75,7 +75,7 @@ export function complete_word(trial) {
     };
     let word = '^' + trial;
 
-    const finalize = (word: string) => {
+    const finalize = (word: string): string => {
         word += '^';
         if (!inventory.Illegals.some(v => word.includes(v)) || !inventory.Illegals[0]) {
             return word.replace(/\^/g, '');
@@ -139,7 +139,7 @@ export function generate_word() {
             Illegals: Lang().Phonotactics.General.Illegals.split(/\s+/g)
         };
         const random_boolean = () => Math.floor(Math.random() * 2) === 0;
-        const choice = arr => arr[Math.floor(Math.random() * arr.length)];
+        const choice = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
         let word = '^';
     
         if (random_boolean()) {
