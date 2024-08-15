@@ -1,7 +1,7 @@
-<script lang="ts">
+<script lang=ts>
     const fs = require('fs');
     const path = require('path');
-    import { docsEditor, Language, selectedCategory, fileLoadIncrement, referenceLanguage, defaultLanguage, dbid, dbkey } from '../stores';
+    import { docsEditor, Language, selectedCategory, fileLoadIncrement, defaultLanguage, dbid, dbkey } from '../stores';
     import type { OutputData } from '@editorjs/editorjs';
     import type * as Lexc from '../types';
     import { userData, showOpenDialog, saveFile, openLegacy, saveAs, importCSV, retrieveFromDatabase } from '../utils/files';
@@ -42,14 +42,28 @@
     let plainTextImport = '';
     $: plainTextImport;
 
+    function tags_array(): string[] {
+        return Array.from(new Set<string>(Object.entries($Language.Lexicon).reduce(
+            (n: string[], [_, word]: [string, Lexc.Word]) => {
+                n.push(...word.Senses.reduce(
+                    (m: string[], sense) => {
+                        m.push(...sense.tags);
+                        return m;
+                    }, []
+                ));
+                return n;
+            }, []
+        )));
+    }
+
     /**
      * Parses the contents of an opened .lexc file and loads the data into the app.
      * If the file is a legacy version, it is passed to the appropriate function.
      * @param {Object} contents - The contents of the opened file.
      */
-    async function read_contents (contents) {
+    async function read_contents (contents: Lexc.Language) {
         if (typeof contents.Version === 'number' || contents.Version === '1.8.x') {
-            try { openLegacy[contents.Version](contents); }
+            try { openLegacy[1.9](contents); }
             catch (err) {
                 vex.dialog.alert(` 
                     The file you attempted to open was saved by an old version of Lexicanter (Version ~${contents.Version}), 
@@ -58,12 +72,15 @@
             }
             return;
         }
-        let errorMessage: string;
+        let errorMessage: string = 'No error has been set.';
+        function setError(message: string): void {
+            errorMessage = message;
+        }
         try {
             // clear language data
             $Language = structuredClone($defaultLanguage);
 
-            errorMessage = 'There was a problem loading the settings of the file.'
+            setError('There was a problem loading the settings of the file.')
             $Language.CaseSensitive = contents.CaseSensitive;
             $Language.IgnoreDiacritics = contents.IgnoreDiacritics;
             $Language.HeaderTags = contents.HeaderTags;
@@ -88,45 +105,45 @@
                 $Language.FileVersion = contents.FileVersion
             }
 
-            errorMessage = 'There was a problem loading the alphabet from the file.'
+            setError('There was a problem loading the alphabet from the file.')
             $Language.Alphabet = contents.Alphabet;
 
-            errorMessage = 'There was a problem loading the file’s lexicon data.'
+            setError('There was a problem loading the file’s lexicon data.')
             $Language.Lexicon = contents.Lexicon;
             $Language.Lects = contents.Lects;
             
-            errorMessage = 'There was a problem loading the file’s phrasebook data.'
+            setError('There was a problem loading the file’s phrasebook data.')
             $Language.Phrasebook = contents.Phrasebook;
             $selectedCategory = Object.keys($Language.Phrasebook)[0]; 
 
-            errorMessage = 'There was a problem loading the file’s documentation data.'
+            setError('There was a problem loading the file’s documentation data.')
             let docs_data: OutputData = contents.Docs;
             $Language.Docs = docs_data;
             $docsEditor.destroy();
             initializeDocs(docs_data);
 
-            errorMessage = 'There was a problem loading the pronunciations rules from the file.'
+            setError('There was a problem loading the pronunciations rules from the file.')
             $Language.Pronunciations = contents.Pronunciations; 
             $Language.Lects.forEach(writeRomans);
 
-            errorMessage = 'There was a problem loading the orthography data from the file.'
+            setError('There was a problem loading the orthography data from the file.')
             if (contents.hasOwnProperty('Orthographies')) {
                 $Language.Orthographies = contents.Orthographies;
                 $Language.ShowOrthography = contents.ShowOrthography;
             }
             
-            errorMessage = 'There was a problem loading the phonotactics rules from the file.'
+            setError('There was a problem loading the phonotactics rules from the file.')
             $Language.Phonotactics = contents.Phonotactics;
 
-            errorMessage = 'There was a problem loading the inflection rules from the file.'
-            let inflections = contents.Inflections;
-            if (!contents.Inflections.categories) inflections.categories = '';
+            setError('There was a problem loading the inflection rules from the file.')
+            let inflections: Lexc.Language['Inflections'] = contents.Inflections;
+            if (!!contents.Inflections && !contents.Inflections[0].categories) inflections.map(i => ({...i, categories: ''}));
             $Language.Inflections = contents.Inflections;
 
-            errorMessage = 'There was a problem loading the etymology data from the file.'
+            setError('There was a problem loading the etymology data from the file.')
             $Language.Etymologies = contents.Etymologies;
 
-            errorMessage = 'There was a problem loading the advanced phonotactics.';
+            setError('There was a problem loading the advanced phonotactics.');
             if (contents.hasOwnProperty('AdvancedPhonotactics')) {
                 $Language.UseAdvancedPhonotactics = contents.UseAdvancedPhonotactics;
                 // Constructs and Illegals fields were added at the same time in 2.1.13 - only need to check for one to know if both exist
@@ -139,12 +156,12 @@
                 $Language.AdvancedPhonotactics = contents.AdvancedPhonotactics;
             }
 
-            errorMessage = 'There was a problem loading the file’s theme.'
+            setError('There was a problem loading the file’s theme.')
             if (contents.hasOwnProperty('FileTheme')) {
                 $Language.FileTheme = contents.FileTheme;
             }
 
-            errorMessage = 'There was a problem syncing with the database.'
+            setError('There was a problem syncing with the database.')
             if (contents.hasOwnProperty('UploadToDatabase')) {
                 $Language.UploadToDatabase = contents.UploadToDatabase
                 if ($Language.UploadToDatabase) {
@@ -159,7 +176,7 @@
                                 vex.dialog.confirm({
                                     message: `The file in the database has no FileVersion number. Would you like to overwrite it with your local version?`,
                                     yesText: 'Upload Local Version',
-                                    callback: (proceed) => {
+                                    callback: (proceed: boolean) => {
                                         if (proceed) {
                                             saveFile();
                                             vex.dialog.alert('Saved and uploaded local file.')
@@ -170,7 +187,7 @@
                                 vex.dialog.confirm({
                                     message: `Detected a newer version of the file in the database (local: ${$Language.FileVersion} | online: ${queryResult.FileVersion}). Would you like to download the changes?`,
                                     yesText: 'Download Changes',
-                                    callback: (proceed, download = queryResult) => {
+                                    callback: (proceed: boolean, download = queryResult) => {
                                         if (proceed) {
                                             $Language = download;
                                             initializeDocs(download.Docs);
@@ -192,8 +209,9 @@
             }
 
         } catch (err) {
+            const error = err instanceof Error? err : Error(String(err));
             vex.dialog.alert(errorMessage + ' Please contact the developer for assistance.');
-            diagnostics.logError(errorMessage, err);
+            diagnostics.logError(errorMessage, error);
             diagnostics.debug.logObj(contents, 'File Contents');
         } finally {
             $fileLoadIncrement++;
@@ -216,26 +234,21 @@
                 file_path => {
                     if (file_path === undefined) {
                         // stop orbit animation
-                        document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-                            planet.style.animationPlayState = 'paused';
-                        });
+                        pauseLoadAnimation();
                         loading_message = 'No file selected.';
                         window.setTimeout(() => {
                             loading_message = '';
                         }, 5000);
                         return;
                     }
-                    fs.readFile(file_path[0], 'utf8', (err, data: string) => {
+                    fs.readFile(file_path[0], 'utf8', (err: any, data: string) => {
                         if (err) {
                             console.log(err);
                             window.alert(
                                 'There was an issue loading your file. Please contact the developer.'
                                 );
                             diagnostics.logError('Attempted to open a file.', err);
-                            document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-                                // loading anim stop
-                                planet.style.animationPlayState = 'paused';
-                            });
+                            pauseLoadAnimation();
                             loading_message = 'Couldn’t open file.';
                             window.setTimeout(() => { loading_message = ''; }, 5000);
                             return;
@@ -243,20 +256,14 @@
                         contents = JSON.parse(data);
                         read_contents(contents);
                         $Language.Name = path.basename(file_path[0], '.lexc');
-                        document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-                            // loading anim stop
-                            planet.style.animationPlayState = 'paused';
-                        });
+                        pauseLoadAnimation();
                         loading_message = 'Done!';
                         window.setTimeout(() => { loading_message = ''; }, 5000);
                     });
                 }
             );
         };
-        document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-            // loading anim start
-            planet.style.animationPlayState = 'running';
-        });
+        runLoadingAnimation();
         loading_message = 'Loading...';
         await userData(user_path => {
             if (!fs.existsSync(`${user_path}${path.sep}Lexicons${path.sep}`)) {
@@ -272,9 +279,7 @@
      * Allows the user to import a .lexc file from their computer.
      */
     async function importFile() {
-        document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-            planet.style.animationPlayState = 'running';
-        });
+        runLoadingAnimation();
         loading_message = 'Loading...';
 
         let [file_handle] = await window.showOpenFilePicker();
@@ -282,9 +287,7 @@
         let file = await file_handle.getFile();
         if (!file.name.includes('.lexc')) {
             window.alert('The selected file was not a .lexc file.');
-            document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-                planet.style.animationPlayState = 'paused';
-            });
+            pauseLoadAnimation()
             loading_message = 'Incorrect file type.';
             window.setTimeout(() => { loading_message = ''; }, 5000);
             return;
@@ -294,9 +297,7 @@
         read_contents(contents);
         $Language.Name = file.name.split('.')[0];
 
-        document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-            planet.style.animationPlayState = 'paused';
-        });
+        pauseLoadAnimation();
         loading_message = 'Done!';
         window.setTimeout(() => { loading_message = ''; }, 5000);
     }
@@ -343,7 +344,7 @@
                     'lects': $Language.Lects,
                 })
             }
-            let pronunciations = {}
+            let pronunciations: Lexc.EntryPronunciations = {}
             pronunciations[$Language.Lects[0]] = pronunciation? {
                 'ipa': pronunciation,
                 'irregular': true,
@@ -366,87 +367,102 @@
         plainTextImport = '';
     }
 
-    async function openReferenceFile() {
-        let contents;
-        let dialog = (userPath: string) => {
-            showOpenDialog(
-                {
-                    title: 'Open Lexicon',
-                    defaultPath: `${userPath}${path.sep}Lexicons${path.sep}`,
-                    properties: ['openFile'],
-                },
-                file_path => {
-                    if (file_path === undefined) {
-                        // stop orbit animation
-                        document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-                            planet.style.animationPlayState = 'paused';
-                        });
-                        loading_message = 'No file selected.';
-                        window.setTimeout(() => {
-                            loading_message = '';
-                        }, 5000);
-                        return;
-                    }
-                    fs.readFile(file_path[0], 'utf8', (err, data: string) => {
-                        if (err) {
-                            console.log(err);
-                            vex.dialog.alert(
-                                'There was an issue loading your file. Please contact the developer.'
-                                );
-                            diagnostics.logError('Attempted to open a file.', err);
-                            document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-                                // loading anim stop
-                                planet.style.animationPlayState = 'paused';
-                            });
-                            loading_message = 'Couldn’t open file.';
-                            window.setTimeout(() => { loading_message = ''; }, 5000);
-                            return;
-                        }
-                        contents = JSON.parse(data) as Lexc.Language;
-                        if (String(contents.Version).split('.')[0] !== '2') {
-                            vex.dialog.alert(
-                                `The file you are attempting to open as a reference was last saved in v${contents.Version} \
-                                and is not compatible with the current version. Contact the developer for assistance.`
-                            );
-                            document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-                                // loading anim stop
-                                planet.style.animationPlayState = 'paused';
-                            });
-                            loading_message = 'Incompatible file.';
-                            window.setTimeout(() => { loading_message = ''; }, 5000);
-                            return;
-                        }
-                        if (contents.Name === $Language.Name){
-                            vex.dialog.alert('You cannot open a reference to the same language.');
-                            document.querySelectorAll('.planet').forEach((planet: HTMLElement) => {
-                                // loading anim stop
-                                planet.style.animationPlayState = 'paused';
-                            });
-                            loading_message = 'Same language.';
-                            window.setTimeout(() => { loading_message = ''; }, 5000);
-                            return;
-                        }
-                        $referenceLanguage = false;
-                        window.setTimeout(() => {
-                            $referenceLanguage = contents;
-                        }, 100);
-                    });
-                }
-            );
-        }
-        await userData(userPath => {
-            dialog(userPath);
+    function pauseLoadAnimation() {
+        document.querySelectorAll('.planet').forEach((planet) => {
+            // loading anim stop
+            (planet as HTMLElement).style.animationPlayState = 'paused';
         });
     }
 
+    function runLoadingAnimation() {
+        document.querySelectorAll('.planet').forEach((planet) => {
+            // loading anim start
+            (planet as HTMLElement).style.animationPlayState = 'running';
+        });
+    }
+
+    function countOccurrences(input: string) {
+        const counts: {[index:string]: number} = input.split('').reduce(
+            (counts: {[index: string]: number}, char) => {
+                if (char === ' ') return counts;
+                counts[char] = counts[char]? counts[char] + 1 : 1;
+                return counts;
+            },
+            { }
+        )
+        return Object.entries(counts).sort((a, b) => b[1] - a[1])
+    }
 </script>
+<style lang=sass>
+    .grid-container
+        display: grid
+        grid-template-columns: repeat(2, 1fr)
+        grid-auto-rows: 1.05rem
+
+        & > *
+            margin: 0 .3rem
+            &:nth-child(odd)
+                text-align: right
+            &:nth-child(even)
+                text-align: left
+</style>
 <!-- File Tab -->
 <div class=tab-pane>
     <div class=row style=height:95vh>
-        <div class="column container" style=overflow-y:auto>
+        <div class='column container' style=overflow-y:auto>
             <p>Document</p>
             <label for=file-name use:tooltip={{position:'right'}} title={`Your file will be saved as: ${$Language.Name}.lexc`}>Name</label>
             <input type=text id=file-name bind:value={$Language.Name}/>
+            <br>
+            <p>File Statistics</p>
+            {#if Object.keys($Language.Lexicon).length === 0}
+                <p>The lexicon is empty. No statistics to report.</p>
+            {:else}
+            <div class=row style=width:80%>
+                    <div class=column>
+                        <div class=grid-container>
+                            <p>Lexicon entries:</p>
+                            <p>{Object.keys($Language.Lexicon).length}</p>
+                            <p>Average word length:</p>
+                            <p>
+                                { Math.round(100 * (Object.keys($Language.Lexicon).join('').length / Object.keys($Language.Lexicon).length)) / 100 }
+                                characters
+                            </p>
+                            <p>Longest Word:</p>
+                            <p style=font-family:Gentium>
+                                { Object.keys($Language.Lexicon).reduce((last, next) => next.length > last.length? next : last) }
+                            </p>
+                            <p>Shortest Word:</p>
+                            <p style=font-family:Gentium>
+                                { Object.keys($Language.Lexicon).reduce((last, next) => next.length < last.length? next : last) }
+                            </p>
+                            <p></p><p></p>
+                            <p>Character</p><p>Occurrences</p>
+                            {#each countOccurrences(Object.keys($Language.Lexicon).join('')) as character}
+                                <p style=font-family:Gentium>{character[0]}</p>
+                                <p>{character[1]}</p>
+                            {/each}
+                        </div>
+                    </div>
+                    <div class=column>
+                        <div class=grid-container>
+                            <p>Number of tags:</p>
+                            <p>{tags_array().length}</p>
+                            <p></p><p></p>
+                            <p>Tag Name</p><p>Occurrences</p>
+                            {#each tags_array().filter(tag => !!tag).map(tag => ({ 
+                                tag: tag,
+                                count: Object.values($Language.Lexicon)
+                                    .filter(word => word.Senses.some(sense => sense.tags.includes(tag)))
+                                    .length
+                            })).sort((a, b) => b.count - a.count) as tag}
+                                <p style=font-variant:small-caps>{tag.tag}</p>
+                                <p>{tag.count}</p>
+                            {/each}
+                        </div>
+                    </div>
+                </div>
+            {/if}
             <br>
             <div class='narrow row'>
                 <div class=column>
@@ -486,28 +502,6 @@
                     Entries with these tags will be sorted separately at the top of the lexicon.
                 </p>
             </div>
-            <br>
-            <button class="hover-highlight hover-shadow" 
-                use:tooltip={{position:'top'}} title="This allows you to open a second language file in read-only mode for referencing."
-                on:click={openReferenceFile}>Open Reference File</button>
-            {#if typeof $referenceLanguage === 'object'}
-                <p>Reference Language: {$referenceLanguage.Name}</p>
-                <button on:click={()=>$referenceLanguage = false} class="hover-highlight hover-shadow">Close Reference File</button>
-                {#if $Language.ShowEtymology}
-                    <button 
-                        use:tooltip={{position:'top'}} title="If you are using Etymology features, this allows you to import a lexicon from another language file as a relative you can which link words to and from."
-                        on:click={() => {
-                            if (typeof $referenceLanguage === 'object') { // redundant check is necessary for linter
-                                if ($referenceLanguage.Name in $Language.Relatives) {
-                                    vex.dialog.alert(`There is already a relative lexicon with the name ${$referenceLanguage.Name}.`);
-                                    return;
-                                }
-                                $Language.Relatives[$referenceLanguage.Name] = $referenceLanguage.Lexicon;
-                                vex.dialog.alert(`Successfully imported ${$referenceLanguage.Name} as a relative lexicon.`);
-                            }
-                    }}>Import Reference Lexicon as Related Lexicon</button>
-                {/if}
-            {/if}
             <br>
             <p use:tooltip={{position:'top'}} title="This feature allows you to apply sound change rules across your lexicon, and then save the result as a new language file.">
                 Evolve Language</p>
