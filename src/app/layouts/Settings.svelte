@@ -3,8 +3,8 @@
     import { userData, saveFile, showOpenDialog, retrieveFromDatabase } from '../utils/files';
     import { Language } from '../stores';
     import type * as Lexc from '../types';
-    const fs = require('fs');
-    const path = require('path');
+    import fs from 'fs';
+    import path from 'path';
     const vex = require('vex-js');
     import { debug, logAction } from '../utils/diagnostics';
     import { get_pronunciation } from '../utils/phonetics';
@@ -106,7 +106,7 @@
             const queryResult = await retrieveFromDatabase();
             if (queryResult !== false) {
                 $Language = queryResult;
-                $docsEditor.destroy();
+                // $docsEditor.destroy();
                 initializeDocs(queryResult.Docs);
                 vex.dialog.alert('Successfully synced from database.');
             } else {
@@ -396,6 +396,126 @@
             } else { dialog(user_path); }
         });
     }
+
+    function setCurrentThemeAsDefault() {
+        $Language.FileTheme = $theme;
+    }
+
+    function clearFileTheme() {
+        $Language.FileTheme = 'default';
+    }
+
+    function refreshFileVersions() {
+        setFileVersions();
+    }
+
+    function deleteTag() {
+        Object.keys($Language.Lexicon).forEach(word => {
+            $Language.Lexicon[word].Senses.forEach((sense, senseIndex) => {
+                if (sense.tags.includes(tag)) {
+                    $Language.Lexicon[word].Senses[senseIndex].tags.splice(sense.tags.indexOf(tag), 1);
+                }
+            });
+        });
+        tag = '';
+    }
+
+    function editTag() {
+        vex.dialog.prompt({
+            message: 'New tag name:',
+            callback: (newName: string) => {
+                if (newName) {
+                    Object.keys($Language.Lexicon).forEach(word => {
+                        $Language.Lexicon[word].Senses.forEach((sense, senseIndex) => {
+                            if (sense.tags.includes(tag)) {
+                                $Language.Lexicon[word].Senses[senseIndex].tags.splice(sense.tags.indexOf(tag), 1);
+                                $Language.Lexicon[word].Senses[senseIndex].tags.push(newName);
+                            }
+                        });
+                    });
+                    tag = newName;
+                }
+            }
+        });
+    }
+
+    function deleteLectConfirm(lect: string, lectIndex: number) {
+        if ($Language.Lects.length === 1) {
+            vex.dialog.alert('You cannot delete the last lect.');
+            return;
+        }
+        vex.dialog.confirm({
+            message: `Are you sure you want to delete the lect "${lect}"? This action cannot be undone.`,
+            callback: function (response: boolean) {
+                if (response) {
+                    deleteLect(lect, lectIndex);
+                    debug.log(`Deleted lect: ${lect}`);
+                }
+            }
+        });
+    }
+
+    function editLectName(lect: string, lectIndex: number) {
+        vex.dialog.prompt({
+            message: 'Edit Lect Name',
+            placeholder: `${lect}`,
+            callback: function (response: string | false) {
+                if (response === false) {
+                    return debug.log('User cancelled the Edit Lect Name dialog.');
+                }
+                changeLectName(lect, response, lectIndex);
+                debug.log(`Edited lect name: ${lect} to ${response}`);
+            }
+        });
+    }
+
+    function addAllWordsToLect(lect: string) {
+        vex.dialog.confirm({
+            message: `Add all words in the lexicon to the lect '${lect}'?`,
+            callback: function (response: boolean) {
+                if (response) {
+                    for (let word in $Language.Lexicon) {
+                        $Language.Lexicon[word].Senses.forEach(sense => {
+                            if (!sense.lects.includes(lect)) {
+                                sense.lects.push(lect);
+                            }
+                        });
+                    }
+                    debug.log(`Added all words to lect: ${lect}`);
+                    vex.dialog.alert(`Added all senses of all words to the lect '${lect}'.`);
+                }
+            }
+        });
+    }
+
+    function addNewLect() {
+        vex.dialog.prompt({
+            message: 'Add a New Lect',
+            placeholder: `New ${$Language.Name} Lect`,
+            callback: function (response: string | false) {
+                if (response === false) {
+                    return debug.log('User cancelled the Add Lect dialog.');
+                }
+                $Language.Lects = [...$Language.Lects, response];
+                $Language.Pronunciations[response] = 'place > holder';
+                $pronunciations[response] = get_pronunciation($wordInput, response);
+                logAction(`Added a new lect: ${response}`);
+            }
+        });
+    }
+
+    function deleteRelative(relative: string) {
+        vex.dialog.confirm({
+            message: `Are you sure you want to delete "${relative}"? This will remove any etymology connections its entries may have.`,
+            callback: function (response: any) {
+                if (response) {
+                    $Language.Etymologies = Object.fromEntries(Object.entries($Language.Etymologies).filter(([_, value]) => value.source !== relative));
+                    delete $Language.Relatives[relative];
+                    logAction(`Deleted relative: ${relative}`);
+                }
+            }
+        });
+    }
 </script>
 <!-- App Settings -->
 <div class="tab-pane">
@@ -436,8 +556,8 @@
                 </select>
             </label>
             <br>
-            <button class="hover-highlight hover-shadow" on:click={()=>{$Language.FileTheme = $theme}}> Set Current Theme as Default for This File </button>
-            <button class="hover-highlight hover-shadow" on:click={()=>{$Language.FileTheme = 'default'}}> Clear File Theme </button>
+            <button class="hover-highlight hover-shadow" on:click={setCurrentThemeAsDefault}> Set Current Theme as Default for This File </button>
+            <button class="hover-highlight hover-shadow" on:click={clearFileTheme}> Clear File Theme </button>
             <br>
             <button class="hover-highlight hover-shadow" on:click={custom_theme}> Load Custom Theme… </button>
 
@@ -460,7 +580,7 @@
                     {#if $Language.UploadToDatabase && verifyHash($dbid, $dbkey)}
                         Local File Version: {localFileVersion} <br>
                         Online File Version: {onlineFileVersion} <br>
-                        <button class='hover-highlight hover-shadow' on:click={setFileVersions}>Refresh</button>
+                        <button class='hover-highlight hover-shadow' on:click={refreshFileVersions}>Refresh</button>
                     {/if}
                     <span>User ID: <input class:pronunciation={disabledDatabase} type=text bind:value={inputID} disabled={disabledDatabase}/></span>
                     <br>
@@ -480,34 +600,8 @@
                 <TagSelector on:select={e => tag = e.detail? e.detail.trim() : ''}/>
                 <p>Selected: {tag}</p>
                 {#if !!tag}
-                    <button class="hover-highlight hover-shadow" on:click={()=>{
-                        Object.keys($Language.Lexicon).forEach(word => {
-                            $Language.Lexicon[word].Senses.forEach((sense, senseIndex) => {
-                                if (sense.tags.includes(tag)) {
-                                    $Language.Lexicon[word].Senses[senseIndex].tags.splice(sense.tags.indexOf(tag), 1);
-                                }
-                            });
-                        });
-                        tag = '';
-                    }}>Delete Tag</button>
-                    <button class="hover-highlight hover-shadow" on:click={()=>{
-                        vex.dialog.prompt({
-                            message: 'New tag name:',
-                            callback: (newName: string) => {
-                                if (newName) {
-                                    Object.keys($Language.Lexicon).forEach(word => {
-                                        $Language.Lexicon[word].Senses.forEach((sense, senseIndex) => {
-                                            if (sense.tags.includes(tag)) {
-                                                $Language.Lexicon[word].Senses[senseIndex].tags.splice(sense.tags.indexOf(tag), 1);
-                                                $Language.Lexicon[word].Senses[senseIndex].tags.push(newName);
-                                            }
-                                        });
-                                    });
-                                    tag = newName;
-                                }
-                            }
-                        });
-                    }}>Edit Tag</button>
+                    <button class="hover-highlight hover-shadow" on:click={deleteTag}>Delete Tag</button>
+                    <button class="hover-highlight hover-shadow" on:click={editTag}>Edit Tag</button>
                 {/if}
             </label>
 
@@ -520,70 +614,12 @@
                     {#each $Language.Lects as lect, lectIndex}
                         <div class="narrow">
                             <p style="display: inline-block" id={`${lectIndex}`}>{lect}</p>
-                            <button class="hover-highlight hover-shadow" style="display: inline-block" on:click={() => {
-                                if ($Language.Lects.length === 1) {
-                                    vex.dialog.alert('You cannot delete the last lect.');
-                                    return;
-                                };
-                                vex.dialog.confirm({
-                                    message: `Are you sure you want to delete the lect "${lect}"? This action cannot be undone.`,
-                                    callback: function (response: boolean) {
-                                        if (response) {
-                                            deleteLect(lect, lectIndex);
-                                            debug.log(`Deleted lect: ${lect}`);
-                                        }
-                                    }
-                                });
-                            }}> ⌫ </button>
-                            <button class="hover-highlight hover-shadow" style="display: inline-block" on:click={() => {
-                                vex.dialog.prompt({
-                                    message: 'Edit Lect Name',
-                                    placeholder: `${lect}`,
-                                    callback: function (response: string | false) {
-                                        if (response === false) {
-                                            return debug.log('User cancelled the Edit Lect Name dialog.');
-                                        }
-                                        changeLectName(lect, response, lectIndex);
-                                        debug.log(`Edited lect name: ${lect} to ${response}`);
-                                    }
-                                })
-                            }}> ✎ </button>
-                            <button class="hover-highlight hover-shadow" style="display: inline-block;" on:click={() => {
-                                vex.dialog.confirm({
-                                    message: `Add all words in the lexicon to the lect '${lect}'?`,
-                                    callback: function (response: boolean) {
-                                        if (response) {
-                                            for (let word in $Language.Lexicon) {
-                                                $Language.Lexicon[word].Senses.forEach(sense => {
-                                                    if (!sense.lects.includes(lect)) {
-                                                        sense.lects.push(lect);
-                                                    }
-                                                });
-                                            };
-                                            debug.log(`Added all words to lect: ${lect}`);
-                                            vex.dialog.alert(`Added all senses of all words to the lect '${lect}'.`);
-                                        }
-                                    }
-                                });
-                            }}> ◎ </button>
+                            <button class="hover-highlight hover-shadow" style="display: inline-block" on:click={() => deleteLectConfirm(lect, lectIndex)}> ⌫ </button>
+                            <button class="hover-highlight hover-shadow" style="display: inline-block" on:click={() => editLectName(lect, lectIndex)}> ✎ </button>
+                            <button class="hover-highlight hover-shadow" style="display: inline-block;" on:click={() => addAllWordsToLect(lect)}> ◎ </button>
                         </div>
                     {/each}
-                    <button class="hover-highlight hover-shadow" on:click={() => { 
-                        vex.dialog.prompt({
-                            message: 'Add a New Lect',
-                            placeholder: `New ${$Language.Name} Lect`,
-                            callback: function (response: string | false) {
-                                if (response === false) {
-                                    return debug.log('User cancelled the Add Lect dialog.');
-                                }
-                                $Language.Lects = [...$Language.Lects, response];
-                                $Language.Pronunciations[response] = 'place > holder';
-                                $pronunciations[response] = get_pronunciation($wordInput, response);
-                                logAction(`Added a new lect: ${response}`);
-                                // debug.log(`Added a new lect: ${response}`)
-                            }
-                        })
-                    }}> + Lect </button>
+                    <button class="hover-highlight hover-shadow" on:click={addNewLect}> + Lect </button>
                 {/if}
             </label>
             <label>Show Pronunciations
@@ -601,18 +637,7 @@
                     {#each Object.keys($Language.Relatives) as relative}
                         <div class="narrow">
                             <p style="display: inline-block;">{relative}</p>
-                            <button class="hover-highlight hover-shadow" style="display: inline-block;" on:click={() => {
-                                vex.dialog.confirm({
-                                    message: `Are you sure you want to delete "${relative}"? This will remove any etymology connections its entries may have.`,
-                                    callback: function (response: any) {
-                                        if (response) {
-                                            $Language.Etymologies = Object.fromEntries(Object.entries($Language.Etymologies).filter(([_, value]) => value.source !== relative));
-                                            delete $Language.Relatives[relative];
-                                            logAction(`Deleted relative: ${relative}`);
-                                        }
-                                    }
-                                });
-                            }}> ⌫ </button>
+                            <button class="hover-highlight hover-shadow" style="display: inline-block;" on:click={() => deleteRelative(relative)}> ⌫ </button>
                         </div>
                     {/each}
                 {/if}

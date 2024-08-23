@@ -3,10 +3,17 @@ import process from 'process';
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import renderer from 'vite-plugin-electron-renderer';
 
 export default defineConfig({
     plugins: [
-        svelte({preprocess: [vitePreprocess()]}),
+        svelte({
+            preprocess: [vitePreprocess()],
+            compilerOptions: {
+                dev: true,
+            }
+        }),
+        renderer(), // adds node polyfills, needed for imports like 'fs' and 'path'
         {
             name: 'remove-src-dir-from-html-path',
             enforce: 'post',
@@ -29,7 +36,7 @@ export default defineConfig({
         rollupOptions: {
             output: { entryFileNames: 'entry.js' }
         },
-        target: 'esnext'
+        target: 'node22.6.0'
     },
     root: path.resolve(process.cwd(), 'src/'),
     base: './',

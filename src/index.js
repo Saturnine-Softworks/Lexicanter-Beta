@@ -99,10 +99,6 @@ const createWindow = () => {
     ipcMain.on('minimize', () => mainWindow.minimize());
     ipcMain.on('maximize', () => mainWindow.isMaximized()? mainWindow.unmaximize() : mainWindow.maximize());
 
-    mainWindow.on('close', e => {
-        mainWindow.webContents.send('app-close');
-        e.preventDefault(); // ! DON'T PUT THIS LINE FIRST. IT BREAKS EVERYTHING. WHY? BEYOND MORTAL COMPREHENSION.
-    });
     ipcMain.on('close', () => {
         // Renderer will send back this event when it's done confirming save and/or quit.
         mainWindow = null;

@@ -16,7 +16,6 @@
     import { vectorSearchTable } from '@xata.io/client';
     const vex = require('vex-js');
 
-    let locationSelector: HTMLInputElement;
     function selectSaveLocation () {
         showOpenDialog({
             properties: ['openDirectory'],
@@ -137,7 +136,7 @@
 
             setError('There was a problem loading the inflection rules from the file.')
             let inflections: Lexc.Language['Inflections'] = contents.Inflections;
-            if (!!contents.Inflections && !contents.Inflections[0].categories) inflections.map(i => ({...i, categories: ''}));
+            if (!!contents.Inflections.length && !contents.Inflections[0].categories) inflections.map(i => ({...i, categories: ''}));
             $Language.Inflections = contents.Inflections;
 
             setError('There was a problem loading the etymology data from the file.')
@@ -393,7 +392,7 @@
         return Object.entries(counts).sort((a, b) => b[1] - a[1])
     }
 </script>
-<style lang=sass>
+<style lang="sass">
     .grid-container
         display: grid
         grid-template-columns: repeat(2, 1fr)

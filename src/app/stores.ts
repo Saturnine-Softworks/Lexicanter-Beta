@@ -100,7 +100,7 @@ export const phrasePronunciations: Writable<PronunciationInputs> = writable((()=
 export const categoryInput = writable('');
 export const selectedCategory = writable('');
 
-export const docsEditor: Writable<EditorJS> = writable(new EditorJS());
+export const docsEditor: Writable<EditorJS> = writable( new EditorJS() );
 
 export const theme = writable('styles/dark.css');
 export const autosave = writable(true);

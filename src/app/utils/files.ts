@@ -43,11 +43,11 @@ export async function showOpenDialog (params: {[index:string]: any}, callback: (
 * @returns {string} The data to be exported.
 */
 async function collectExportData (): Promise<string> {
-    if (typeof get(docsEditor).save === 'function') {
-        console.log('Save function found for docs editor.', get(docsEditor));
-        await get(docsEditor).save().then(data => {
-            Lang().Docs = data;
-        });
+    if (false /*&& typeof get(docsEditor).save === 'function'*/) {
+        // console.log('Save function found for docs editor.', get(docsEditor));
+        // await get(docsEditor).save().then(data => {
+        //     Lang().Docs = data;
+        // });
     } else {
         console.log('No save function found for docs editor.', get(docsEditor));
     }
@@ -404,9 +404,9 @@ export const saveAs = {
                                     
             let documentation: HTMLElement = document.createElement('div');
             // Convert EditorJS save data to HTML.
-            await get(docsEditor).save().then(data => {
-                documentation = editorjsToHTML(data, documentation);
-            });
+            // await get(docsEditor).save().then(data => {
+            //     documentation = editorjsToHTML(data, documentation);
+            // });
                                     
             // Create export body
             const body = document.createElement('body');
@@ -463,9 +463,9 @@ export const saveAs = {
             export_container.appendChild(head);
                                     
             let body: HTMLElement = document.createElement('body');
-            await get(docsEditor).save().then(data => {
-                body = editorjsToHTML(data, body);
-            });
+            // await get(docsEditor).save().then(data => {
+            //     body = editorjsToHTML(data, body);
+            // });
             body.style.padding = '12em';
             body.classList.add('container');
             export_container.appendChild(body);
@@ -622,7 +622,7 @@ export const openLegacy = {
             diagnostics.logError('Attempted to load version 1.9 phonotactics.', error);
         }
         try { 
-            get(docsEditor).destroy();
+            // get(docsEditor).destroy();
             initializeDocs(contents.Docs); 
         } catch (err) {
             const error = err instanceof Error? err : Error(String(err));

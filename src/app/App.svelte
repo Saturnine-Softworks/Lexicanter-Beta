@@ -8,6 +8,7 @@
 	import Phrasebook from './layouts/Phrasebook.svelte';
 	import Phonology from './layouts/Phonology.svelte';
     import Documentation from './layouts/Documentation.svelte';
+    // @ts-ignore // For some ungodly reason TypeScript disagrees with this import
 	import File from './layouts/File.svelte';
 	import Settings from './layouts/Settings.svelte';
     import Changelog from './layouts/Changelog.svelte';
@@ -17,11 +18,6 @@
     import Inflection from './layouts/Inflection.svelte';
     import Orthography from './layouts/Orthography.svelte';
     import Wiki from './layouts/Wiki.svelte';
-
-    // Debug block
-    $: {
-        // diagnostics.debug.logObj($Language, 'An update was made to the Language store', false);
-    }
 
     const tabs     = [ Lexicon,   Etymology,   Phrasebook,   Inflection,   Phonology,   Orthography,   Documentation,   File,   Settings,   Changelog, Wiki]
     const tab_btns = ['Lexicon', 'Etymology', 'Phrasebook', 'Inflection', 'Phonology', 'Orthography', 'Documentation', 'File', 'settings', 'history', 'help'];
@@ -35,7 +31,8 @@
      */
     ipcRenderer.on('app-close', _ => {
         if ($autosave) {
-                diagnostics.logAction('Autosaving before exit.');
+            console.log('Autosaving before exit.');
+            diagnostics.logAction('Autosaving before exit.');
             saveFile().then(_ => {
                 window.setTimeout(() => ipcRenderer.send('close'), 1000); // Give time for the notification to show
             });
@@ -52,12 +49,12 @@
 </script>
 
 <link rel="stylesheet" href="{$Language.FileTheme === 'default'? $theme : $Language.FileTheme}" />
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
 <body id="body" spellcheck="false">
     <div class='tab-container'>
         <div class="row">
-            <div class="column" style={'width: 100%'}>
+            <div class="column" style='width: 100%'>
                 <p class="window-control">
                     <button class="hover-highlight close material-icons" on:click={() => ipcRenderer.send('buttonclose')}>close</button>
                     <button class="hover-highlight minimize material-icons" on:click={() => ipcRenderer.send('minimize')}>remove</button>
@@ -95,3 +92,4 @@
         </div>
     </div>
 </body>
+<div></div>
