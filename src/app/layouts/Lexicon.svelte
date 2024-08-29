@@ -16,13 +16,13 @@
     let defInputs = [''];
     let searchWords = ''; let searchDefinitions = ''; let searchTags = ''; let lectFilter = '';
     $: searchWords, searchDefinitions, searchTags, lectFilter; // Update the search when these values change
-    let keys: string[] = [];
+    let keys: string[] | [null] = [];
 
     let filtered_lex: Lexc.Lexicon;
     $: filtered_lex = keys.reduce((acc, key) => {
-        if (key in $Language.Lexicon) acc[key] = $Language.Lexicon[key];
+        if (key && (key in $Language.Lexicon)) acc[key] = $Language.Lexicon[key];
         return acc;
-    }, {});
+    }, {} as Lexc.Lexicon);
 
     let alphabetized: string[];
     $: { // Update the alphabetized lexicon when conditions change
@@ -115,12 +115,12 @@
      * @param {bool} append
      */
     function commitWord(word: string, append: boolean): void {
-        const emptySensesFilter = (sense: senseInput) => <boolean> (senses[''] !== sense) && (!!sense.definition);
-        const senseRemapper = (sense: senseInput) => <Lexc.Sense> {
+        const emptySensesFilter = (sense: senseInput) => !!sense.definition;
+        const senseRemapper = (sense: senseInput): Lexc.Sense => ({
             definition: sense.definition,
             tags: sense.tags.split(/\s+/g),
             lects: sense.lects,
-        };
+        });
         if (!append) {
             $Language.Lexicon[word] = <Lexc.Word> {
                 pronunciations: <Lexc.EntryPronunciations> (() => {
@@ -144,9 +144,9 @@
         // follow_lex_link(word);
         $wordInput = '';
         $pronunciations = (()=>{
-            const obj = {};
+            const obj: Record<string, string> = {};
             $Language.Lects.forEach(lect => {
-                obj[lect] = ''
+                obj[lect] = '';
             });
             return obj;
         })();

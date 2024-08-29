@@ -5,8 +5,6 @@
     import Pronunciations from './Pronunciations.svelte';
     import Inflections from './Inflections.svelte';
     import { markdownToHtml } from '../utils/markdown';
-    import { debug } from '../utils/diagnostics';
-    import { applyRules, parseRules } from '../utils/sca';
     import EntryLabel from './EntryLabel.svelte';
     const dispatch = createEventDispatcher();
     const edit = () => dispatch('edit')
@@ -70,8 +68,8 @@
         entryAncestors = getAncestors();
     }
 </script>
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div id='{word}' class="lex-entry prelined" oncontextmenu={edit}>
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div id='{word}' class="lex-entry prelined" on:contextmenu={edit}>
     <EntryLabel {word} {source} />
     <Pronunciations pronunciations={ source.pronunciations }/>
     {#each source.Senses as Sense, i}

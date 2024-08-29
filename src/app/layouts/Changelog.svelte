@@ -4,6 +4,9 @@
         '2.2.1': {
             type: PRERELEASE,
             notes: [
+                'Created the new Transubstantiator engine! Try it out in a new file, or in an old file by changing your Rules Engine setting in Settings.',
+                'Added the ability to clear the Graphemy cache (found in Settings). This is necessary if you modify your Graphemy file and want the changes to take effect in the app.',
+                'Updated embedded Graphemy typesetter engine to 0.3.0.',
                 'Lots of changes under the hood to make this thing work with Vite...and <i>hopefully</i> speed up my development cycle.',
             ]
         },

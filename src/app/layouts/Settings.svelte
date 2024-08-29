@@ -516,6 +516,32 @@
             }
         });
     }
+
+    // Add this new function to clear the Graphemy cache
+    function clearGraphemyCache() {
+        userData(user_path => {
+            const cacheDir = path.join(user_path, 'GraphemyCache');
+            if (fs.existsSync(cacheDir)) {
+                fs.readdir(cacheDir, (err, files) => {
+                    if (err) {
+                        vex.dialog.alert('Error reading Graphemy cache directory.');
+                        return;
+                    }
+                    
+                    for (const file of files) {
+                        fs.unlink(path.join(cacheDir, file), err => {
+                            if (err) {
+                                vex.dialog.alert(`Error deleting file ${file} from Graphemy cache.`);
+                            }
+                        });
+                    }
+                    vex.dialog.alert('Graphemy cache cleared successfully.');
+                });
+            } else {
+                vex.dialog.alert('The Graphemy cache has not been created yet. You can ignore this message if you have not yet used the feature.');
+            }
+        });
+    }
 </script>
 <!-- App Settings -->
 <div class="tab-pane">
@@ -686,6 +712,16 @@
                     </label>
                 {/if}
             </label>
+            <br><br>
+            <p class="info">
+                If you use the feature which allows you to use orthographies you created with Graphemy,
+                the app keeps a cache of all text that has been generated from a given file so that it doesn't have
+                to regenerate those SVGs every time you, for instance, open your file, or use a search field. 
+                If you modify your Graphemy file, you will likely need to clear the cache before the changes are
+                reflected in the app. You can do so by clicking the button below.
+            </p>
+            <button class="hover-highlight hover-shadow" on:click={clearGraphemyCache}>Clear Graphemy Cache</button>
+            <br><br>
         </div>
     </div>
 </div>

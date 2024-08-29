@@ -17,13 +17,32 @@ const Lang = () => get(Language);
  * Takes a word and returns its pronunciation based on
  * the user-defined romanization rules.
  * @param {string} word
+ * @param {string} lect
+ * @param {false | Lexc.Language} reference
+ * @param {boolean} deliverWarnings
  * @returns {string}
  */
 export function get_pronunciation(
     word: string,
     lect: string,
+): string;
+export function get_pronunciation(
+    word: string,
+    lect: string,
+    reference: false | Lexc.Language,
+): string;
+export function get_pronunciation(
+    word: string,
+    lect: string,
+    reference: false | Lexc.Language,
+    deliverWarnings: true
+): { result: string, warning: string };
+export function get_pronunciation(
+    word: string,
+    lect: string,
     reference: false | Lexc.Language = false,
-): string {
+    deliverWarnings: boolean = false
+): string | { result: string, warning: string } {
     // console.log('Requested pronunciation for ' + word + ' in ' + lect + '.');
     let rules: string;
     if (!reference) rules = Lang().Pronunciations[lect];
@@ -33,7 +52,14 @@ export function get_pronunciation(
         const settings = parseRules(rules);
         return applyRules(settings.rules, word, settings.categories);
     } else {
-        return run(rules, word).result;
+        try {
+            const result = run(rules, word).result;
+            return deliverWarnings ? {result, warning: ''} : result;
+        } catch (err) {
+            console.error(err);
+            const error = err as Error;
+            return deliverWarnings ? {result: word, warning: error.message} : word;
+        }
     }
 }
 

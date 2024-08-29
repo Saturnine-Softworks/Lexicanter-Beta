@@ -3,10 +3,11 @@
     import { get_pronunciation, writeRomans, complete_word, generate_word } from '../utils/phonetics';
     import { tooltip } from '@svelte-plugins/tooltips';
     import type { AdvancedPhonotactics } from "../types";
+    import { writable } from 'svelte/store';
     let trial = ''; let ortho_test = '';
     function setInStone (event: Event) {
         const target = event.target as HTMLInputElement;
-        const value = target.value.trim();
+        const value = target.value;
         const {[selectedLect]: _, ...rest} = $Language.Pronunciations;
         $Language.Pronunciations = {
             ...rest,
@@ -159,8 +160,17 @@
             selectedLect = $Language.Lects[0];
         }
     }
-    $: test_pronunciation = get_pronunciation(ortho_test, selectedLect);
+    let activate = false;
+    let test_pronunciation = {warning: '', result: ''};
+    $: {
+        activate;
+        ortho_test;
+        test_pronunciation = get_pronunciation(ortho_test, selectedLect, false, true);
+    }
     let generated_words = Array(24).fill('');
+
+    // Add a new store for the font preference
+    let useJulia = true;
 
 </script>
 <!-- Phonology Tab -->
@@ -243,7 +253,7 @@
                     Coda Consonants</label>
                 <textarea id="codas" class="phonology" bind:value={$Language.Phonotactics.General.Codas}></textarea>
                 <br>
-                <label for="vowels" use:tooltip={{position:'right'}} title="This field is for defining vowels or sounds which can occur as a syllable’s nucleus.">
+                <label for="vowels" use:tooltip={{position:'right'}} title="This field is for defining vowels or sounds which can occur as a syllable's nucleus.">
                     Vowels</label>
                 <textarea id="vowels" class="phonology" bind:value={$Language.Phonotactics.General.Vowels}></textarea>
                 <br>
@@ -270,10 +280,12 @@
                 </div>
             {/each}
         </div>
-        <!-- Romanization -->
+        <!-- Pronunciations -->
         <div class="container column scrolled" style="height: 100%">
-            <label use:tooltip={{position:'bottom'}} title="This field is for writing pronunciation rules to convert your romanization to phonetic notation. See the Help tab for more information."
-                > Pronunciations
+            <label for="pronunciations-input">
+                <p use:tooltip={{position:'bottom'}} title="This field is for writing pronunciation rules to convert your romanization to phonetic notation. See the Help tab for more information.">
+                    Pronunciations
+                </p>
                 {#if $Language.UseLects}    
                     <select bind:value={selectedLect} on:change={updatePhonologyInput}>
                         {#each $Language.Lects as lect}
@@ -281,17 +293,47 @@
                         {/each}
                     </select>
                 {/if}
-                <textarea class="prelined" rows="24" style="text-align: left" id="pronunciations-input"
-                    value={$Language.Pronunciations[selectedLect]}
-                    on:blur={e => {
-                        setInStone(e); // binding directly to the store is very slow when the language is large
-                        writeRomans(selectedLect);
-                    }}
-                />
             </label>
-            <br><br>
-            <label use:tooltip={{position:'top'}} title="This field allows you to test that your rules are working as expected.">
-                Rule Testing
+
+            <div class="row" style="display: flex; justify-content: flex-end; margin-right: 10%; margin-bottom: 0.5rem;">
+                <label style="display: flex; align-items: center">
+                    Monospace &nbsp;
+                    <input type="checkbox" bind:checked={useJulia} style="margin-right: 0.5rem;">
+                </label>
+            </div>
+
+            <textarea 
+                id="pronunciations-input"
+                class="prelined" 
+                rows="24" 
+                style={`
+                    font-family: ${useJulia ? 'Julia' : 'Gentium'};
+                    text-align: left; 
+                    ${test_pronunciation.warning ? 'border: 0.3em solid #a04444;' : ''}
+                `}
+                value={$Language.Pronunciations[selectedLect]}
+                on:blur={e => {
+                    writeRomans(selectedLect);
+                }}
+                on:input={(e) => {
+                    setInStone(e);
+                    test_pronunciation = get_pronunciation(ortho_test, selectedLect, false, true);
+                }}
+            />
+            <div class="warning-container" class:active={test_pronunciation.warning}>
+                {#if test_pronunciation.warning}
+                    <div class="warning-box">
+                        <p>
+                            <code>{test_pronunciation.warning}</code>
+                        </p>
+                    </div>
+                {/if}
+            </div>
+            <br>
+            <label>
+                <p use:tooltip={{position:'bottom'}} title="This field allows you to test that your rules are working as expected.">
+                    Rule Testing
+                </p>
                 <textarea 
                     class="prelined" rows="2" 
                     bind:value={ortho_test}
@@ -299,9 +341,35 @@
             </label>
             <textarea
                 class="pronunciation" rows="2"
-                bind:value={test_pronunciation}
+                value={test_pronunciation.result}
                 readonly
             />
+            <br>
         </div>
     </div>
 </div>
+
+<style lang="sass">
+.warning-container
+    max-height: 0
+    opacity: 0
+    transform: translateY(-2rem)
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out, transform 0.3s ease-out
+    overflow: hidden
+
+    &.active
+        max-height: 31.25rem
+        opacity: 1
+        transform: translateY(0)
+
+    .warning-box
+        background-color: #181818
+        padding: 1rem
+        border-radius: 0.5rem
+        margin: 0.5rem auto
+        width: 80%
+        text-align: left
+        font-size: 70%
+        color: #a04444
+        white-space: pre-wrap
+</style>
