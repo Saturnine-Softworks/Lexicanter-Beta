@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import path from 'path';
 import process from 'process';
 import { defineConfig } from 'vite';
@@ -11,7 +12,7 @@ export default defineConfig({
             preprocess: [vitePreprocess()],
             compilerOptions: {
                 dev: true,
-            }
+            },
         }),
         renderer(), // adds node polyfills, needed for imports like 'fs' and 'path'
         {
@@ -20,11 +21,15 @@ export default defineConfig({
             generateBundle(_, bundle) {
                 const htmlFileInSrcFolderPattern = /^index.html$/;
                 for (const outputItem of Object.values(bundle)) {
-                    if (!htmlFileInSrcFolderPattern.test(outputItem.fileName)) continue;
-                    outputItem.fileName = outputItem.fileName.replace('index', 'entry');
+                    if (!htmlFileInSrcFolderPattern.test(outputItem.fileName))
+                        continue;
+                    outputItem.fileName = outputItem.fileName.replace(
+                        'index',
+                        'entry',
+                    );
                 }
-            }
-        }
+            },
+        },
     ],
     resolve: {
         alias: {
@@ -34,9 +39,16 @@ export default defineConfig({
     build: {
         outDir: './',
         rollupOptions: {
-            output: { entryFileNames: 'entry.js' }
+            output: { entryFileNames: 'entry.js' },
         },
-        target: 'node22.6.0'
+        target: 'node22.6.0',
+    },
+    define: {
+        'import.meta.vitest': 'undefined',
+    },
+    test: {
+        include: ['./**/*.spec.ts'],
+        includeSource: ['./**/*.ts'],
     },
     root: path.resolve(process.cwd(), 'src/'),
     base: './',
