@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { ipcRenderer } = require('electron');
 import { get } from 'svelte/store';
 import { Language } from '../../stores';
