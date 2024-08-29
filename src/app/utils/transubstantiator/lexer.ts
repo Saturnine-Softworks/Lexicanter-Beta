@@ -68,8 +68,8 @@ const lexer = moo.states({
         ...common,
         ...operators,
         literal: /(?! *(?:[>/]|\\\\ *$))\S/u,
-        transform: { match: /[>/]/u, next: 'replacement' },
-        cascade: { match: /\\\\ *$/u, next: 'cascade' },
+        transform: { match: /[>/](?= *?\S)/u, next: 'replacement' },
+        cascade: { match: /\\\\(?= *\n *?\S)/u, next: 'cascade' },
     },
     replacement: {
         // MARK: — Replacement state
@@ -114,43 +114,46 @@ const lexer = moo.states({
 // MARK: Postprocessor
 type Token = [string, string, [number, number]];
 function postprocess(lexer: moo.Lexer): Token[] {
+    const identifiers: string[] = [];
     return (
-        Array.from(lexer)
-            // filter out comments and tokens of type `whitespace`; semantically relevant whitespace is captured by other tokens
-            .filter(
-                (token) =>
-                    !['comment', 'whitespace'].includes(token.type as string)
-            )
-            // map to array of [type, text, [line, col]]
-            .map(
-                (token) =>
-                    [token.type, token.text, [token.line, token.col]] as [
-                        string,
-                        string,
-                        [number, number]
-                    ]
-            )
-            // combine consecutive literals into one token
-            .reduce((accumulator, [type, text, position], index, array) => {
-                if (
-                    index > 0 &&
-                    type === 'literal' &&
-                    array[index - 1][0] === 'literal'
-                )
-                    accumulator[accumulator.length - 1][1] += text;
-                else accumulator.push([type, text, position]);
+        (
+            Array.from(lexer)
+                // filter out comments
+                .filter((token) => token.type !== 'comment')
+                // map to array of [type, text, [line, col]]
+                .map((token) => {
+                    if (token.type === 'identifier')
+                        identifiers.push(token.text); // collect identifiers for later
+                    return [
+                        token.type,
+                        token.text,
+                        [token.line, token.col],
+                    ] as [string, string, [number, number]];
+                })
+                // combine consecutive literals into one token
+                .reduce((accumulator, [type, text, position], index, array) => {
+                    if (
+                        index > 0 &&
+                        type === 'literal' &&
+                        array[index - 1][0] === 'literal'
+                    )
+                        accumulator[accumulator.length - 1][1] += text;
+                    else accumulator.push([type, text, position]);
 
-                return accumulator;
-            }, [] as [string, string, [number, number]][])
-            // Check if a literal matches an identifier and retype it if so
-            .map(([type, text, position], _i, array) =>
-                type === 'literal' &&
-                array.some(
-                    (token) => token[0] === 'identifier' && token[1] === text
-                )
-                    ? ['identifier', text, position]
-                    : [type, text, position]
+                    return accumulator;
+                }, [] as [string, string, [number, number]][])
+                // Check if a literal matches an identifier and retype it if so
+                .map(([type, text, position], _i, array) =>
+                    type === 'literal' &&
+                    array.some(
+                        (token) =>
+                            token[0] === 'identifier' && token[1] === text
+                    )
+                        ? ['identifier', text, position]
+                        : [type, text, position]
             ) satisfies Token[]
+        // remove whitespace tokens; they are not filtered out at the beginning so that identifiers can be found
+        ).filter((token) => token[0] !== 'whitespace')
     );
 }
 
