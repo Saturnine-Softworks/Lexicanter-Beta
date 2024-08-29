@@ -1,4 +1,4 @@
-/** 
+/**
  * Lexicanter, a constructed language organization app.
  * Copyright (C) 2023 Ethan Ray.
  * See GNU General Public License Version 3.
@@ -26,7 +26,7 @@ const createWindow = () => {
         show: true,
         webPreferences: {
             devTools: isDev,
-            nodeIntegration: true,   // these two settings are required in order to use
+            nodeIntegration: true, // these two settings are required in order to use
             contextIsolation: false, // modules such as path and fs in renderer processes.
         },
     });
@@ -55,7 +55,7 @@ const createWindow = () => {
         // Load production build
         mainWindow.loadFile(`${__dirname}/entry.html`);
     } else {
-        // Load vite dev server page 
+        // Load vite dev server page
         console.log('Development mode');
         mainWindow.loadURL('http://localhost:3000/');
     }
@@ -90,14 +90,20 @@ const createWindow = () => {
     // Even with contextIsolation set to false, there are some things which still require interprocess communication.
     // IPC handlers below.
     ipcMain.handle('getUserDataPath', () => app.getPath('userData'));
-    ipcMain.handle('showOpenDialog', (_, params) => dialog.showOpenDialogSync(params));
+    ipcMain.handle('showOpenDialog', (_, params) =>
+        dialog.showOpenDialogSync(params),
+    );
     ipcMain.handle('getVersion', () => version);
     ipcMain.handle('debug', (_, message) => console.log(message));
     ipcMain.handle('platform', () => process.platform);
     ipcMain.handle('isDev', () => isDev);
     ipcMain.on('buttonclose', () => mainWindow.webContents.send('app-close'));
     ipcMain.on('minimize', () => mainWindow.minimize());
-    ipcMain.on('maximize', () => mainWindow.isMaximized()? mainWindow.unmaximize() : mainWindow.maximize());
+    ipcMain.on('maximize', () =>
+        mainWindow.isMaximized() ?
+            mainWindow.unmaximize()
+        :   mainWindow.maximize(),
+    );
 
     ipcMain.on('close', () => {
         // Renderer will send back this event when it's done confirming save and/or quit.
@@ -106,11 +112,18 @@ const createWindow = () => {
     });
 
     // Interop signature definitions
-    const dylibPath = isDev
-        ? path.resolve(path.join(__dirname, 'app/utils/interop/library/target/release/liblibrary.dylib'))
-        : path.resolve(process.resourcesPath, 'liblibrary.dylib');
+    const dylibPath =
+        isDev ?
+            path.resolve(
+                path.join(
+                    __dirname,
+                    'app/utils/interop/library/target/release/liblibrary.dylib',
+                ),
+            )
+        :   path.resolve(process.resourcesPath, 'liblibrary.dylib');
     const lib = ffi.load(dylibPath);
-    const fns = { // fn name = lib.func(rust fn name, return type, [parameter types])
+    const fns = {
+        // fn name = lib.func(rust fn name, return type, [parameter types])
         echo: lib.func('echo', 'str', ['str']),
         graphemify: lib.func('graphemify', 'str', ['str', 'str', 'str', 'str']),
     };

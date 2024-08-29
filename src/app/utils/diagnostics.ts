@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 // can't import this from utils/files because it causes a circular dependency
-async function userData (callback: (user_path: string) => void): Promise<void> {
+async function userData(callback: (user_path: string) => void): Promise<void> {
     const path = await ipcRenderer.invoke('getUserDataPath');
     callback(path);
 }
@@ -14,17 +14,17 @@ async function userData (callback: (user_path: string) => void): Promise<void> {
 /**
  * This function pushes a new diagnostic record to the diagnostics
  * data in the Language object, which is saved along with the save
- * file. 
+ * file.
  * @param {string} action - The action that was being performed when the error occurred.
  * @param {string} error - The error message.
  */
 export function logError(action: string, error: Error): void {
-    get(Language).Diagnostics.push(<Lexc.Diagnostic> {
+    get(Language).Diagnostics.push(<Lexc.Diagnostic>{
         Time: Date(),
         Version: get(Language).Version,
         OS: process.platform,
         Action: action,
-        Error: error.stack
+        Error: error.stack,
     });
     debug.error(error.stack);
 }
@@ -35,32 +35,50 @@ export function logError(action: string, error: Error): void {
  * @param {string} action - The action that was performed.
  */
 export function logAction(action: string): void {
-    get(Language).Diagnostics.push(<Lexc.Diagnostic> {
+    get(Language).Diagnostics.push(<Lexc.Diagnostic>{
         Time: Date(),
         Version: get(Language).Version,
         OS: process.platform,
-        Action: action
+        Action: action,
     });
 }
 
-function logToFile(message: string | undefined, report: 'info' | 'warning' | 'error'): void {
-    userData(userPath => {
+function logToFile(
+    message: string | undefined,
+    report: 'info' | 'warning' | 'error',
+): void {
+    userData((userPath) => {
         const logsPath = userPath + path.sep + 'Diagnostics' + path.sep;
         if (!fs.existsSync(logsPath)) {
             fs.mkdirSync(logsPath);
         }
         const timestamp = new Date().toString();
         const logFile = logsPath + 'logs';
-        const log = 
-            'Report: ' + report + '\n'
-            + 'Time: ' + timestamp + '\n' 
-            + 'Version: ' + ipcRenderer.invoke('getVersion') + '\n'
-            + 'File: (v'  + get(Language).Version + ') ' + get(Language).Name + '\n'
-            + message + '\n';
+        const log =
+            'Report: ' +
+            report +
+            '\n' +
+            'Time: ' +
+            timestamp +
+            '\n' +
+            'Version: ' +
+            ipcRenderer.invoke('getVersion') +
+            '\n' +
+            'File: (v' +
+            get(Language).Version +
+            ') ' +
+            get(Language).Name +
+            '\n' +
+            message +
+            '\n';
         if (!fs.existsSync(logFile)) {
-            fs.writeFile(logFile, log, (err: Error) => {if (err) debug.error(String(err), false);});
+            fs.writeFile(logFile, log, (err: Error) => {
+                if (err) debug.error(String(err), false);
+            });
         } else {
-            fs.appendFile(logFile, log, (err: Error) => {if (err) debug.error(String(err), false);});
+            fs.appendFile(logFile, log, (err: Error) => {
+                if (err) debug.error(String(err), false);
+            });
         }
     });
 }
@@ -68,32 +86,56 @@ function logToFile(message: string | undefined, report: 'info' | 'warning' | 'er
 export const debug = {
     log: (message: string, logFile = true) => {
         if (logFile) logToFile(message, 'info');
-        const formatted = '\x1B[22m\x1B[4mLexc Debug\x1B[24m:\x1B[22m ' + '\x1B[32m' + message + '\x1B[39m';
+        const formatted =
+            '\x1B[22m\x1B[4mLexc Debug\x1B[24m:\x1B[22m ' +
+            '\x1B[32m' +
+            message +
+            '\x1B[39m';
         console.log(formatted);
         ipcRenderer.invoke('debug', formatted);
     },
     logObj: (obj: unknown, name = '', logFile = true) => {
-        if (logFile) logToFile('Object: ' + name + '\n' + JSON.stringify(obj, null, 2), 'info');
-        const objString = JSON.stringify(obj, null, 2)
-            .replace(/(.*):/g, '\x1B[32m$1\x1B[39m:');
-        const formatted = '\x1B[22m\x1B[4mLexc Debug\x1B[24m\x1B[22m ' + '\x1B[32m' + name + ':\x1B[39m' + '\n' + objString;
+        if (logFile)
+            logToFile(
+                'Object: ' + name + '\n' + JSON.stringify(obj, null, 2),
+                'info',
+            );
+        const objString = JSON.stringify(obj, null, 2).replace(
+            /(.*):/g,
+            '\x1B[32m$1\x1B[39m:',
+        );
+        const formatted =
+            '\x1B[22m\x1B[4mLexc Debug\x1B[24m\x1B[22m ' +
+            '\x1B[32m' +
+            name +
+            ':\x1B[39m' +
+            '\n' +
+            objString;
         ipcRenderer.invoke('debug', formatted);
         console.log(formatted);
-    },    
+    },
     warn: (message: string, logFile = true) => {
         if (logFile) logToFile(message, 'warning');
-        const formatted = '\x1B[22m\x1B[4mLexc Debug\x1B[24m\x1B[22m ' + '\x1B[33m' + message + '\x1B[39m';
+        const formatted =
+            '\x1B[22m\x1B[4mLexc Debug\x1B[24m\x1B[22m ' +
+            '\x1B[33m' +
+            message +
+            '\x1B[39m';
         ipcRenderer.invoke('debug', formatted);
         console.log(formatted);
     },
     error: (message: string | undefined, logFile = true) => {
         if (logFile) logToFile(message, 'error');
-        const formatted = '\x1B[22m\x1B[4mLexc Debug\x1B[24m\x1B[22m ' + '\x1B[31m' + message + '\x1B[39m';
+        const formatted =
+            '\x1B[22m\x1B[4mLexc Debug\x1B[24m\x1B[22m ' +
+            '\x1B[31m' +
+            message +
+            '\x1B[39m';
         ipcRenderer.invoke('debug', formatted);
         console.log(formatted);
     },
-    logAndReturn: <T> (object:T, message = '', logFile = false): T => {
+    logAndReturn: <T>(object: T, message = '', logFile = false): T => {
         debug.logObj(object, message, logFile);
         return object;
-    }
+    },
 };

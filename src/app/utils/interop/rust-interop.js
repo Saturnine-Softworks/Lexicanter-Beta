@@ -21,8 +21,9 @@ async function ffi(name, ...args) {
 export async function graphemify(file, text, ortho_name) {
     const user_path = `${await ipcRenderer.invoke('getUserDataPath')}/GraphemyCache/${Lang().Name}-${ortho_name}-${text}.svg`;
     const isDev = await ipcRenderer.invoke('isDev');
-    const bin_path = isDev
-        ? './src/app/utils/interop/library/src/graphemy'
-        : path.resolve(process.resourcesPath, 'graphemy');
+    const bin_path =
+        isDev ?
+            './src/app/utils/interop/library/src/graphemy'
+        :   path.resolve(process.resourcesPath, 'graphemy');
     return ffi('graphemify', file, text, user_path, bin_path);
 }

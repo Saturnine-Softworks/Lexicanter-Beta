@@ -1,5 +1,8 @@
 import { docsEditor } from '../stores';
-import EditorJS, { type EditorConfig, type OutputData } from '@editorjs/editorjs';
+import EditorJS, {
+    type EditorConfig,
+    type OutputData,
+} from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import Paragraph from '@editorjs/paragraph';
 import Table from '@editorjs/table';
@@ -11,7 +14,8 @@ enum LogLevels { // REVIEW - monkeypatch gets around type check error, can't imp
     WARN = 'WARN',
     ERROR = 'ERROR',
 }
-export class Monospace { // EditorJS custom class
+export class Monospace {
+    // EditorJS custom class
     api: any;
     button: null | HTMLButtonElement;
     tag: string;
@@ -44,8 +48,11 @@ export class Monospace { // EditorJS custom class
         if (!range) {
             return;
         }
-        const termWrapper = this.api.selection.findParentTag(this.tag, Monospace.CSS);
-    
+        const termWrapper = this.api.selection.findParentTag(
+            this.tag,
+            Monospace.CSS,
+        );
+
         // If start or end of selection is in the highlighted block
         if (termWrapper) {
             this.unwrap(termWrapper);
@@ -63,7 +70,7 @@ export class Monospace { // EditorJS custom class
          */
         m.appendChild(range.extractContents());
         range.insertNode(m);
-    
+
         // Expand (add) selection to highlighted block
         this.api.selection.expandToTag(m);
     }
@@ -76,22 +83,25 @@ export class Monospace { // EditorJS custom class
         if (sel) {
             const range = sel.getRangeAt(0);
             const unwrappedContent = range.extractContents();
-        
+
             // Remove empty term-tag
             if (termWrapper.parentNode) {
                 termWrapper.parentNode.removeChild(termWrapper);
             }
-        
+
             // Insert extracted content
             range.insertNode(unwrappedContent);
-        
+
             // Restore selection
             sel.removeAllRanges();
             sel.addRange(range);
         }
     }
     checkState() {
-        const termTag = this.api.selection.findParentTag(this.tag, Monospace.CSS);
+        const termTag = this.api.selection.findParentTag(
+            this.tag,
+            Monospace.CSS,
+        );
         if (this.button) {
             this.button.classList.toggle(this.iconClasses.active, !!termTag);
         }
@@ -107,7 +117,7 @@ export class Monospace { // EditorJS custom class
     static get toolbox() {
         return {
             icon: 'M',
-            title: 'Monospace'
+            title: 'Monospace',
         };
     }
 }
@@ -119,7 +129,10 @@ export class Monospace { // EditorJS custom class
  * will be initialized with an empty document.
  * @param {Object} data
  */
-export function initializeDocs(data: OutputData | null = null, holder = 'docs-tab'): void {
+export function initializeDocs(
+    data: OutputData | null = null,
+    holder = 'docs-tab',
+): void {
     const config: Partial<EditorConfig> = {
         holder,
         tools: {

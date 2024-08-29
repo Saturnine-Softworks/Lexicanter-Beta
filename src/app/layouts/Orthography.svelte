@@ -1,4 +1,5 @@
 <script lang='ts'>
+	import type { Orthography } from './../types.ts';
     import { Language } from "../stores";
     import { parseRules, applyRules } from "../utils/sca";
     let selectedOrtho = '';
@@ -20,7 +21,7 @@
     $: graphemyOutput, (async () => {
         SVGData = correctSVGSize(await readSVG(
             testInput,
-            $Language.Orthographies.find(o => o.name === selectedOrtho)?.name,
+            $Language.Orthographies.find(o => o.name === selectedOrtho)?.name ?? '',
         ))
     })();
 
@@ -31,7 +32,11 @@
      * @param attribute
      * @param index
      */
-    function setAttribute(event: Event, attribute: string, index: number) {
+    type StringKeys<T> = {
+        [K in keyof T]: T[K] extends string ? K : never
+    }[keyof T];
+
+    function setAttribute(event: Event, attribute: StringKeys<Orthography>, index: number) {
         const target = event.target as HTMLInputElement;
         const value = target.value.trim();
 
@@ -48,7 +53,7 @@
             }
         }
 
-        $Language.Orthographies[index][attribute] = value;
+        ($Language.Orthographies[index] as Record<StringKeys<Orthography>, string>)[attribute] = value;
     }
 </script>
 <div class=tab-pane>
@@ -173,15 +178,15 @@
                 <textarea bind:value={testInput} rows=6/>
                 {#if $Language.Orthographies.find(o => o.name === selectedOrtho)?.typesetter === 'graphemy'}
                     <button on:click={async () => {
-                        graphemyOutput = await graphemify(
-                            $Language.Orthographies.find(o => o.name === selectedOrtho)?.font,
-                            (() => {
-                                const settings = parseRules($Language.Orthographies.find(o => o.name === selectedOrtho)?.rules || '');
-                                return applyRules(settings.rules, testInput, settings.categories);
-                            })(),
-                            $Language.Orthographies.find(o => o.name === selectedOrtho)?.name,
-                        );
-                    }}>Generate SVG</button>
+                        const ortho = $Language.Orthographies.find(o => o.name === selectedOrtho);
+                        if (ortho) {
+                            const settings = parseRules(ortho.rules || '');
+                            const processedText = applyRules(settings.rules, testInput, settings.categories);
+                            graphemyOutput = await graphemify(ortho.font || '', processedText, ortho.name);
+                        }
+                    }}>
+                        Generate SVG
+                    </button>
                     <br>
                     <div>
                         {@html SVGData}

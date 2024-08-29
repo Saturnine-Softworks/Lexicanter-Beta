@@ -31,7 +31,7 @@ const DatabaseClient = buildClient();
 
 const defaultOptions = {
     databaseURL:
-    'https://Saturnine-s-workspace-cvl2j3.us-east-1.xata.sh/db/Lexicanter',
+        'https://Saturnine-s-workspace-cvl2j3.us-east-1.xata.sh/db/Lexicanter',
 };
 
 export class XataClient extends DatabaseClient<DatabaseSchema> {
@@ -44,7 +44,7 @@ let instance: XataClient | undefined = undefined;
 
 export const getXataClient = () => {
     if (instance) return instance;
-    
+
     instance = new XataClient();
     return instance;
 };
