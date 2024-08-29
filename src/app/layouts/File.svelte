@@ -121,6 +121,9 @@
             $docsEditor.destroy();
             initializeDocs(docs_data);
 
+            setError('There was a problem loading the rules engine preference from the file.')
+            $Language.RulesEngine = contents.RulesEngine ?? 'scats';
+
             setError('There was a problem loading the pronunciations rules from the file.')
             $Language.Pronunciations = contents.Pronunciations; 
             $Language.Lects.forEach(writeRomans);

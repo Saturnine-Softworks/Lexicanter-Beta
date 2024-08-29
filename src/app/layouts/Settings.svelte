@@ -622,6 +622,28 @@
                     <button class="hover-highlight hover-shadow" on:click={addNewLect}> + Lect </button>
                 {/if}
             </label>
+            <br>
+            <label>Rules Engine
+                <br>
+                <select bind:value={$Language.RulesEngine}>
+                    <option value="scats">SCATS</option>
+                    <option value="transubstantiator">Transubstantiator</option>
+                </select>
+                <p class='info narrow'>
+                    Before version 2.2, Lexicanter's engine for pronunciation/inflection rules was a script known 
+                    internally as Scats (<code>sca.ts</code>, Sound Change Applier dot TypeScript). This engine
+                    had a plethora of design flaws and bugs that were difficult to address due to how it had been
+                    programmed. <br><br>
+                    There is a new engine available, Transubstantiator, which is much more feature-rich and far less
+                    buggy out of the gate, and it is designed such that it will be far easier to extend in the future. 
+                    However, it is not fully backwards compatible. <br><br>
+                    Nevertheless, it is the new default engine. If you open an older file which uses the old engine, 
+                    this setting will be set to Scats automatically. While Scats is now deprecated and it is 
+                    recommended that you use Transubstantiator, the old engine will remain as an option for the 
+                    foreseeable future.
+                </p>
+            </label>
+            <br><br>
             <label>Show Pronunciations
                 <input type="checkbox" bind:checked={$Language.ShowPronunciation}/>
             </label>
